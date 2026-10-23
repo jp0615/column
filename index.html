@@ -22,6 +22,7 @@ button{touch-action:manipulation;font-family:inherit}
 #sky i{position:absolute;background:#fff;opacity:.85;height:24px}
 #sky i:before,#sky i:after{content:'';position:absolute;background:#fff;height:24px}
 #sky i:before{left:24px;top:-24px;width:48px}#sky i:after{left:72px;top:-12px;width:24px;height:36px}
+#app:has(.bwrap){max-width:1200px}
 #app{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 10px)}
 h1{font-size:44px;margin:4px 0 0;text-align:center;color:#fff;text-shadow:4px 4px 0 #2c4a1e,-2px -2px 0 #2c4a1e,2px -2px 0 #2c4a1e,-2px 2px 0 #2c4a1e;letter-spacing:2px;font-weight:400}
 .sub{text-align:center;font-size:24px;color:#2c4a1e;margin:6px 0 10px}
@@ -110,6 +111,38 @@ h2{font-size:30px;margin:8px 0;font-weight:400;color:#2c4a1e}
 .buddy{display:flex;align-items:center;gap:12px;justify-content:center;margin:8px 0}
 .bubble{background:#fff;padding:10px 16px;font-size:24px;box-shadow:0 0 0 4px #1e1e1e;position:relative;max-width:560px}
 .bubble:before{content:'';position:absolute;left:-14px;top:50%;margin-top:-7px;border:7px solid transparent;border-right-color:#1e1e1e}
+/* 我的世界（自己蓋） */
+.bwrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.bleft{display:flex;flex-direction:column;align-items:center;gap:10px}
+#wc{display:block;touch-action:none;box-shadow:0 0 0 4px #1e1e1e;image-rendering:pixelated;cursor:crosshair;background:#8fd0ff}
+.tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+.tools .btn{width:auto;display:inline-block;font-size:24px;padding:12px 16px;margin:0}
+.tools .btn.on{outline:5px solid #ffd400;outline-offset:2px}
+.hotbar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;width:100%;background:#3b3b3b;padding:8px;box-shadow:0 0 0 4px #1e1e1e}
+.hb{position:relative;border:0;background:#8b8b8b;padding:6px 2px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:#fff;font-family:inherit;
+  box-shadow:inset -4px -4px 0 #555,inset 4px 4px 0 #bdbdbd;min-height:80px;touch-action:manipulation}
+.hb .blk{width:42px;height:42px}
+.hb .nm{font-size:16px;text-shadow:2px 2px 0 #333;white-space:nowrap}
+.hb .ct{position:absolute;right:4px;top:30px;font-size:22px;color:#fff;text-shadow:2px 2px 0 #000,-1px -1px 0 #000}
+.hb.sel{background:#f2c230;box-shadow:inset -4px -4px 0 #a37b00,inset 4px 4px 0 #ffe58a,0 0 0 4px #fff}
+.hb.sel .nm{color:#3b2a00;text-shadow:none}
+.hb.zero .blk{opacity:.35}.hb.zero .ct{color:#ffb0a8}
+.hb.lock{background:#555}.hb.lock .blk{filter:grayscale(1) brightness(.5)}
+.hb .lk{position:absolute;left:50%;top:14px;transform:translateX(-50%);font-size:26px}
+.binfo{font-size:20px;color:#2c4a1e;text-align:center;min-height:28px}
+.bag{display:inline-flex;align-items:center;gap:8px;background:#a8743f;color:#fff;font-size:30px;padding:8px 18px;box-shadow:inset -5px -5px 0 #6b4520,inset 5px 5px 0 #d2a06a,0 0 0 4px #1e1e1e;text-shadow:2px 2px 0 #000}
+.bag.bump{animation:pop .3s}
+.gotrow{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:10px 0}
+.got{display:flex;align-items:center;gap:6px;font-size:24px;background:rgba(255,255,255,.7);padding:4px 10px 4px 4px;box-shadow:0 0 0 3px #1e1e1e}
+.unl{font-size:24px;color:#fff;background:#8a55d6;padding:10px 14px;margin:10px 0;text-align:center;box-shadow:0 0 0 4px #1e1e1e;text-shadow:2px 2px 0 #000}
+.lvrow .t .u{display:block;font-size:16px;color:#6b3fb0}
+.mini{display:block;margin:0 auto;box-shadow:0 0 0 4px #1e1e1e;cursor:pointer;image-rendering:pixelated}
+@media (orientation:landscape) and (min-width:900px){
+  .bwrap{flex-direction:row;align-items:flex-start;justify-content:center}
+  .hotbar{grid-template-columns:repeat(3,1fr);width:300px;flex:0 0 300px}
+  .hb{min-height:78px}
+}
+@media (max-width:600px){.hotbar{grid-template-columns:repeat(5,1fr)}.tools .btn{font-size:18px;padding:10px}}
 /* 紀錄 */
 .srow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:3px solid #a9a9a9;font-size:22px}
 .srow .nm{flex:0 0 230px}
@@ -141,11 +174,11 @@ function now(){return Date.now()}
 function pickW(o){var t=0,k;for(k in o)t+=o[k];var r=Math.random()*t;for(k in o){r-=o[k];if(r<=0)return k}return k}
 
 /* ---------- 像素材質（原創，程式即時畫出） ---------- */
-var TX={};
+var TX={},TXC={};
 function seedR(s){return function(){s=(s*16807)%2147483647;return (s-1)/2147483646}}
 function mk(name,seed,fn){var c=document.createElement('canvas');c.width=c.height=16;var x=c.getContext('2d'),r=seedR(seed);
   function p(X,Y,col){x.fillStyle=col;x.fillRect(X,Y,1,1)}function pick(a){return a[Math.floor(r()*a.length)]}
-  fn(p,pick,r,x);TX[name]=c.toDataURL()}
+  fn(p,pick,r,x);TX[name]=c.toDataURL();TXC[name]=c}
 function noise(p,pick,pal){for(var y=0;y<16;y++)for(var X=0;X<16;X++)p(X,y,pick(pal))}
 var DIRT=['#8b5a2b','#7a4e24','#9c6a3a','#6b4220','#8b5a2b'],STONE=['#8a8a8a','#7d7d7d','#959595','#727272','#8a8a8a'];
 function ore(name,seed,cols){mk(name,seed,function(p,pick,r){noise(p,pick,STONE);var n=0;while(n<5){var cx=1+Math.floor(r()*13),cy=1+Math.floor(r()*13);
@@ -168,6 +201,7 @@ function buildTextures(){
   mk('sbrick',43,function(p,pick){for(var y=0;y<16;y++)for(var X=0;X<16;X++){var row=Math.floor(y/8),off=row%2?4:0;p(X,y,(y%8===7||(X+off)%8===7)?'#555':pick(['#8f8f8f','#848484','#999']))}});
   mk('door',47,function(p,pick){for(var y=0;y<16;y++)for(var X=0;X<16;X++){var fr=X<2||X>13||y<1;p(X,y,fr?'#5e3d1e':(y>2&&y<7&&X>3&&X<12?'#3a2a1a':pick(['#9a6a3a','#8f6234'])))}p(11,9,'#ffd23f');p(11,10,'#d9a400')});
   mk('dia',53,function(p,pick){for(var y=0;y<16;y++)for(var X=0;X<16;X++){var e=X===0||y===0||X===15||y===15;p(X,y,e?'#1d8f8a':((X+y)%7===0?'#e6fffd':pick(['#5fe7e0','#4fd8d1'])))}});
+  mk('ironb',57,function(p,pick){for(var y=0;y<16;y++)for(var X=0;X<16;X++){var e=X===0||y===0||X===15||y===15;p(X,y,e?'#9a9a9a':((X+y)%7===0?'#ffffff':pick(['#e2e2e2','#d6d6d6','#ececec'])))}});
   mk('goldb',59,function(p,pick){for(var y=0;y<16;y++)for(var X=0;X<16;X++){var e=X===0||y===0||X===15||y===15;p(X,y,e?'#b88a00':((X+y)%7===0?'#fff4b0':pick(['#ffd83d','#f6c923'])))}});
   ore('iron',61,['#e8c09a','#c08a5e','#f3d6b8']);ore('gold',67,['#ffe14d','#e0a800','#fff2a0']);ore('diamond',71,['#7ff3ec','#28bdb6','#dffffc']);
   mk('rainbow',73,function(p,pick,r){noise(p,pick,['#4b3b66','#3f3159','#55457a']);var C=['#ff5a7a','#ffd23f','#5fe7a0','#5fa8ff','#c08bff'];for(var i=0;i<14;i++){var X=Math.floor(r()*15),Y=Math.floor(r()*15),c=C[i%5];p(X,Y,c);p(X+1,Y,c);p(X,Y+1,'#ffffff')}});
@@ -183,9 +217,9 @@ function buddy(sz){var s='<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 12 12
 
 /* ---------- 資料 ---------- */
 var D;
-function blank(){return {v:1,xp:0,blocks:0,lv:{},sk:{},hist:[],nudge:null,sound:true,voice:true,guideAll:false}}
+function blank(){return {v:2,xp:0,blocks:0,lv:{},sk:{},hist:[],nudge:null,sound:true,voice:true,guideAll:false,inv:{},world:'',unl:{},bp:0,bpDone:{},migNote:true}}
 function load(){var b=blank(),o=null;try{o=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-  D=(o&&typeof o==='object')?o:b;for(var k in b)if(D[k]===undefined)D[k]=b[k]}
+  D=(o&&typeof o==='object')?o:b;for(var k in b)if(D[k]===undefined)D[k]=b[k];migrate()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('儲存失敗，請檢查儲存空間')}}
 
 /* ---------- 關卡 ---------- */
@@ -256,19 +290,95 @@ var BPT={r:'roof',p:'plank',l:'log',w:'glass',o:'door',c:'cobble',f:'leaf',s:'sb
 BP.forEach(function(b){var cells=[],H=b.rows.length;for(var y=H-1;y>=0;y--)for(var x=0;x<16;x++){var ch=b.rows[y][x];if(ch&&ch!=='.')cells.push({x:x,y:y,t:BPT[ch]})}b.cells=cells;b.H=H});
 function bpAt(total){var i=0,left=total;while(true){var b=BP[i%BP.length];if(left<b.cells.length||left===0)return {i:i,b:b,placed:left};left-=b.cells.length;i++}}
 function bpName(i){var b=BP[i%BP.length];return b.name+(i>=BP.length?'（第 '+(Math.floor(i/BP.length)+1)+' 座）':'')}
-function worldHtml(total,from,maxW){var at=bpAt(total),done=false;
-  if(at.placed===0&&total>0){at=bpAt(total-1);at.placed=at.b.cells.length;done=true} /* 剛蓋好的房子先完整展示 */
-  var b=at.b,start=total-at.placed,w=Math.max(16,Math.min(44,Math.floor((maxW-8)/16))),map={};
-  b.cells.forEach(function(c,k){map[c.x+','+c.y]={c:c,k:k}});
-  var h='<div class="world" style="--w:'+w+'px;width:'+(w*16+8)+'px;padding:'+(w*1.5)+'px 4px 0"><div class="wlab">'+esc(bpName(at.i))+'：'+at.placed+' / '+b.cells.length+' 塊'+(done?' ✅ 完成！':'')+'</div><div class="wg" style="grid-template-columns:repeat(16,var(--w))">';
-  var nb=0;for(var y=0;y<b.H;y++)for(var x=0;x<16;x++){var m=map[x+','+y];
-    if(!m){h+='<div class="wc"></div>';continue}
-    var idx=start+m.k;if(m.k<at.placed){var isN=from!=null&&idx>=from;h+='<div class="wc blk'+(isN?' nb':'')+'" style="'+bg(m.c.t)+(isN?';animation-delay:'+(Math.min(nb++,30)*0.08)+'s':'')+'"></div>'}
-    else h+='<div class="wc gh"></div>'}
-  for(x=0;x<16;x++)h+='<div class="wc blk" style="'+bg('grass')+'"></div>';
-  for(x=0;x<16;x++)h+='<div class="wc blk" style="'+bg('dirt')+'"></div>';
-  return h+'</div></div>'}
 
+/* ---------- 背包與「我的世界」（她自己蓋；阿方不會幫忙放方塊） ---------- */
+var BT=[
+ {id:'grass',c:'g',n:'草地'},{id:'dirt',c:'d',n:'泥土'},{id:'stone',c:'s',n:'石頭'},{id:'cobble',c:'c',n:'碎石'},{id:'plank',c:'p',n:'木板'},
+ {id:'log',c:'l',n:'原木'},{id:'leaf',c:'f',n:'樹葉'},{id:'glass',c:'w',n:'玻璃'},{id:'roof',c:'r',n:'屋瓦'},{id:'door',c:'o',n:'門'},
+ {id:'brick',c:'b',n:'紅磚',u:2},{id:'sbrick',c:'k',n:'石磚',u:4},{id:'iron',c:'i',n:'鐵礦',u:4},{id:'ironb',c:'I',n:'鐵塊',u:4},
+ {id:'gold',c:'G',n:'金礦',u:5},{id:'goldb',c:'Y',n:'金塊',u:5},{id:'diamond',c:'m',n:'鑽石礦',u:6},{id:'dia',c:'D',n:'鑽石塊',u:6},{id:'rainbow',c:'R',n:'彩虹水晶',u:7}];
+var BTI={},CH2T={};BT.forEach(function(b){BTI[b.id]=b;CH2T[b.c]=b.id});
+var BW=24,BH=16,GROUND=BH-2,BPX=4;
+/* 一般方塊：用答題分數換（各礦坑主題稍微多一點）；稀有方塊：精通該礦坑後才會挖到 */
+var GEN={plank:3,cobble:2.5,dirt:2,grass:1.5,log:1.5,stone:1.5,leaf:1.2,glass:1.2,roof:1.2,door:.4};
+var GENX={1:{grass:2,dirt:2},2:{plank:1.6,log:1.6},3:{stone:2,cobble:2}};
+var RARE={2:['brick'],4:['iron','ironb','sbrick'],5:['gold','goldb','brick'],6:['diamond','dia','sbrick'],7:null};
+var RARE_P=0.3;
+function wInit(){var s='';for(var y=0;y<BH;y++)for(var x=0;x<BW;x++)s+=y===GROUND?'g':y>GROUND?'d':'.';return s}
+function invTotal(){var t=0;for(var k in D.inv)t+=D.inv[k]|0;return t}
+function isUnl(b){return !b.u||!!D.unl[b.u]}
+function updateUnlocks(){var out=[];[2,4,5,6,7].forEach(function(k){if(!D.unl[k]&&mastered(k)){D.unl[k]=now();BT.forEach(function(b){if(b.u===k)out.push(b.n)})}});return out}
+function earn(n,k,got){var w={},t;for(t in GEN)w[t]=GEN[t]*((GENX[k]||{})[t]||1);
+  var rp=RARE[k]===null?BT.filter(function(b){return b.u&&isUnl(b)}).map(function(b){return b.id}):(RARE[k]||[]).filter(function(id){return isUnl(BTI[id])});
+  for(var i=0;i<n;i++){t=(rp.length&&Math.random()<RARE_P)?rp[rnd(rp.length)]:pickW(w);D.inv[t]=(D.inv[t]|0)+1;if(got)got[t]=(got[t]|0)+1}}
+/* 舊版（阿方自動蓋藍圖）→ 新版：已經蓋上去的每一塊，照原本的種類全部放進背包 */
+function migrate(){if(!D.inv||typeof D.inv!=='object')D.inv={};if(!D.unl||typeof D.unl!=='object')D.unl={};if(!D.bpDone||typeof D.bpDone!=='object')D.bpDone={};
+  if(typeof D.world!=='string'||D.world.length!==BW*BH)D.world=wInit();
+  if((+D.v||1)<2){var left=Math.max(0,D.blocks|0),i=0,n=0;
+    while(left>0){var b=BP[i%BP.length],take=Math.min(left,b.cells.length);for(var j=0;j<take;j++){D.inv[b.cells[j].t]=(D.inv[b.cells[j].t]|0)+1;n++}left-=take;i++}
+    D.bp=D.blocks>0?(bpAt(D.blocks).i%BP.length):0;D.migNote=n>0?n:true;D.v=2}
+  if(typeof D.bp!=='number'||D.bp<-1||D.bp>=BP.length)D.bp=0;updateUnlocks()}
+function bpCells(i){if(i<0||!BP[i])return [];var b=BP[i],y0=GROUND-b.H;return b.cells.map(function(c){var t=c.t;return {i:(y0+c.y)*BW+c.x+BPX,t:t}})}
+function bpProg(wa,i){var cs=bpCells(i),ok=0;cs.forEach(function(c){if(CH2T[wa[c.i]]===c.t)ok++});return {ok:ok,n:cs.length}}
+function drawWorld(cv,wa,cell,ghost){var dpr=window.devicePixelRatio||1,W=BW*cell,H=BH*cell;cv.style.width=W+'px';cv.style.height=H+'px';
+  if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}var x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.imageSmoothingEnabled=false;
+  var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#6fbaff');g.addColorStop(1,'#cdeeff');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle='#ffe066';x.fillRect(cell*20.5,cell*1,cell*2,cell*2);x.fillStyle='rgba(255,255,255,.85)';x.fillRect(cell*2,cell*2,cell*4,cell*.8);x.fillRect(cell*3,cell*1.4,cell*2,cell*.8);x.fillRect(cell*11,cell*3,cell*3,cell*.7);
+  if(ghost){x.strokeStyle='rgba(255,255,255,.18)';x.lineWidth=1;x.beginPath();for(var gx=1;gx<BW;gx++){x.moveTo(gx*cell+.5,0);x.lineTo(gx*cell+.5,H)}for(var gy=1;gy<BH;gy++){x.moveTo(0,gy*cell+.5);x.lineTo(W,gy*cell+.5)}x.stroke()}
+  for(var i=0;i<BW*BH;i++){var t=CH2T[wa[i]];if(t&&TXC[t])x.drawImage(TXC[t],(i%BW)*cell,Math.floor(i/BW)*cell,cell,cell)}
+  if(ghost&&D.bp>=0){bpCells(D.bp).forEach(function(c){if(wa[c.i]!=='.')return;var X=(c.i%BW)*cell,Y=Math.floor(c.i/BW)*cell;x.globalAlpha=.32;x.drawImage(TXC[c.t],X,Y,cell,cell);x.globalAlpha=1;
+    x.setLineDash([4,3]);x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=2;x.strokeRect(X+2,Y+2,cell-4,cell-4);x.setLineDash([])})}}
+var WA=null,UNDO=[],bsel='plank',btool='place',stroke=null,lastSnd=0;
+function cellSize(){var land=innerWidth>innerHeight&&innerWidth>=900,aw=app.clientWidth-28;
+  return land?Math.max(16,Math.floor(Math.min((aw-330)/BW,(innerHeight-190)/BH))):Math.max(14,Math.floor(Math.min((aw-8)/BW,(innerHeight*0.5)/BH)))}
+function hbHtml(){return BT.map(function(b){var n=D.inv[b.id]|0,lk=!isUnl(b)&&!n;
+  return '<button class="hb'+(b.id===bsel&&btool==='place'?' sel':'')+(lk?' lock':(!n?' zero':''))+'" data-a="hb" data-t="'+b.id+'" id="hb-'+b.id+'">'+icon(b.id)+(lk?'<span class="lk">🔒</span>':'<span class="ct" id="ct-'+b.id+'">'+n+'</span>')+'<span class="nm">'+b.n+'</span></button>'}).join('')}
+function bpLabel(){return D.bp<0?'📐 藍圖：關':'📐 藍圖：'+BP[D.bp].name}
+function buildView(){WA=D.world.split('');var cs;
+  app.innerHTML='<div class="top"><button class="btn small stone" data-a="home">🏠 回首頁</button><b style="font-size:28px;font-weight:400;color:#2c4a1e;white-space:nowrap">🌍 我的世界</b>'+bagHtml()+'</div>'+
+  '<div class="bwrap"><div class="bleft"><canvas id="wc"></canvas><div class="binfo" id="binfo"></div>'+
+  '<div class="tools"><button class="btn wood'+(btool==='place'?' on':'')+'" data-a="tool" data-t="place" id="t-place">🧱 放方塊</button><button class="btn stone'+(btool==='dig'?' on':'')+'" data-a="tool" data-t="dig" id="t-dig">⛏️ 挖掘</button>'+
+  '<button class="btn blue" data-a="bundo" id="t-undo">↩️ 復原</button><button class="btn purple" data-a="bp" id="t-bp">'+bpLabel()+'</button></div></div>'+
+  '<div class="hotbar" id="hotbar">'+hbHtml()+'</div></div>'+
+  '<div style="text-align:center;margin-top:6px"><button class="btn small red" data-a="bclear">🧹 全部收回背包</button></div>';
+  cs=cellSize();var cv=$('#wc');drawWorld(cv,WA,cs,true);binfo();
+  cv.addEventListener('pointerdown',pDown);cv.addEventListener('pointermove',pMove);cv.addEventListener('pointerup',pUp);cv.addEventListener('pointercancel',pUp);cv.addEventListener('lostpointercapture',pUp)}
+function bagHtml(){return '<span class="bag" id="bag">🎒 <b id="bagn" style="font-weight:400">'+invTotal()+'</b></span>'}
+function binfo(msg){var e=$('#binfo');if(!e)return;if(msg){e.textContent=msg;return}
+  var t=btool==='dig'?'⛏️ 挖掘：點一下方塊，它會回到背包':'🧱 '+BTI[bsel].n+'：點一下或用手指拖過去，就能放方塊';
+  if(D.bp>=0){var pr=bpProg(WA,D.bp);t+='　｜　📐 '+BP[D.bp].name+' '+pr.ok+' / '+pr.n}e.textContent=t}
+function redraw(){var cv=$('#wc');if(cv&&WA)drawWorld(cv,WA,cellSize(),true)}
+function cellAt(e){var r=$('#wc').getBoundingClientRect(),X=Math.floor((e.clientX-r.left)/r.width*BW),Y=Math.floor((e.clientY-r.top)/r.height*BH);
+  if(X<0||Y<0||X>=BW||Y>=BH)return null;return {x:X,y:Y}}
+function applyCell(x,y){var i=y*BW+x,S=stroke;if(S.seen[i])return;S.seen[i]=1;
+  if(btool==='place'){if(WA[i]!=='.'){S.occ=true;return}
+    if((D.inv[bsel]|0)<=0){if(!S.warned){S.warned=true;toast('背包裡的「'+BTI[bsel].n+'」用完了！去答題挖更多 ⛏️')}return}
+    D.inv[bsel]--;var c=BTI[bsel].c;S.ch.push({i:i,f:'.',t:c});WA[i]=c;hbCount(bsel)}
+  else{if(WA[i]==='.')return;var t=CH2T[WA[i]];S.ch.push({i:i,f:WA[i],t:'.'});WA[i]='.';if(t){D.inv[t]=(D.inv[t]|0)+1;hbCount(t)}}
+  var n=Date.now();if(n-lastSnd>70){lastSnd=n;if(btool==='place')sndBlock();else sndDig()}}
+function walk(a,b){var dx=Math.abs(b.x-a.x),dy=Math.abs(b.y-a.y),sx=a.x<b.x?1:-1,sy=a.y<b.y?1:-1,err=dx-dy,x=a.x,y=a.y,k=0;
+  while(k++<100){applyCell(x,y);if(x===b.x&&y===b.y)break;var e2=2*err;if(e2>-dy){err-=dy;x+=sx}if(e2<dx){err+=dx;y+=sy}}}
+function pDown(e){if(stroke)return;e.preventDefault();try{e.target.setPointerCapture(e.pointerId)}catch(x){}var c=cellAt(e);
+  stroke={pid:e.pointerId,ch:[],seen:{},last:c,occ:false,warned:false};if(c)applyCell(c.x,c.y);redraw()}
+function pMove(e){if(!stroke||e.pointerId!==stroke.pid)return;e.preventDefault();var c=cellAt(e);if(!c)return;
+  if(stroke.last){if(c.x===stroke.last.x&&c.y===stroke.last.y)return;walk(stroke.last,c)}else applyCell(c.x,c.y);stroke.last=c;redraw()}
+function pUp(e){if(!stroke||(e&&e.pointerId!==stroke.pid))return;var S=stroke;stroke=null;
+  if(S.ch.length){UNDO.push(S.ch);if(UNDO.length>300)UNDO.shift();commit()}
+  else if(S.occ&&btool==='place')toast('這格已經有方塊了！要換的話，先用 ⛏️ 挖掉');}
+function commit(){D.world=WA.join('');save();binfo();bpCheck()}
+function bpCheck(){if(D.bp<0)return;var pr=bpProg(WA,D.bp);if(pr.ok===pr.n&&!D.bpDone[D.bp]){D.bpDone[D.bp]=now();save();sndWin();confetti(150);
+  setTimeout(function(){overlay('bpov','<div style="display:flex;justify-content:center">'+buddy(90)+'</div><div style="font-size:32px;color:#c2410c;margin:8px 0">🎉 你自己蓋好「'+esc(BP[D.bp].name)+'」了！</div><div style="font-size:24px">阿方：哇！好厲害的建築師！👏</div><button class="btn" style="margin-top:14px" data-a="ovclose" data-o="bpov">👍 好耶</button>')},400)}}
+function hbCount(t){var e=document.getElementById('ct-'+t),b=document.getElementById('hb-'+t),n=D.inv[t]|0;if(e)e.textContent=n;if(b){b.classList.toggle('zero',!n);if(!n&&!isUnl(BTI[t]))b.classList.add('lock')}
+  var g=document.getElementById('bagn');if(g)g.textContent=invTotal()}
+function bUndo(){var ch=UNDO.pop();if(!ch){toast('沒有可以復原的了');return}
+  for(var k=ch.length-1;k>=0;k--){var c=ch[k];
+    if(c.f==='.'){var t=CH2T[c.t];if(WA[c.i]===c.t){WA[c.i]='.';D.inv[t]=(D.inv[t]|0)+1}}
+    else{var t2=CH2T[c.f];if(WA[c.i]==='.'&&(D.inv[t2]|0)>0){WA[c.i]=c.f;D.inv[t2]--}}}
+  sndTap();commit();buildView()}
+function bClear(){var ch=[];for(var i=0;i<WA.length;i++)if(WA[i]!=='.'){var t=CH2T[WA[i]];ch.push({i:i,f:WA[i],t:'.'});if(t)D.inv[t]=(D.inv[t]|0)+1;WA[i]='.'}
+  if(!ch.length){toast('世界裡沒有方塊喔');return}UNDO.push(ch);commit();buildView();toast('全部收回背包了！按「↩️ 復原」可以放回去')}
+function miniWorld(maxW){return '<canvas class="mini" id="mini" data-a="build"></canvas>'}
+function drawMini(maxW){var cv=$('#mini');if(cv)drawWorld(cv,D.world.split(''),Math.max(8,Math.floor(maxW/BW)),false)}
 /* ---------- 聲音：爸爸的聲音（預錄短句）＋像素音效 ---------- */
 var AU=null,unlocked=false,BU={};
 function auInit(){if(!AU){try{AU=new Audio();AU.preload='auto'}catch(e){AU=null}}return AU}
@@ -283,6 +393,7 @@ function tone(f,t0,d,type,vol){if(D.sound===false)return;var a=ac();if(!a)return
   var s=a.currentTime+t0;g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol||0.08,s+0.01);g.gain.exponentialRampToValueAtTime(0.0001,s+d);o.connect(g);g.connect(a.destination);o.start(s);o.stop(s+d+0.05)}
 function sndTap(){tone(440,0,.05,'square',.05)}
 function sndBlock(){tone(180,0,.06,'square',.12);tone(120,.05,.08,'square',.1)}
+function sndDig(){tone(90,0,.07,'sawtooth',.08);tone(140,.04,.05,'square',.06)}
 function sndOk(){tone(523,0,.09);tone(784,.08,.09);tone(1046,.16,.16)}
 function sndNo(){tone(196,0,.15,'square',.07);tone(147,.12,.2,'square',.07)}
 function sndWin(){[523,659,784,1046,784,1046,1318].forEach(function(f,i){tone(f,i*.11,.16)})}
@@ -300,36 +411,44 @@ function flyBlock(el,tex){if(!el)return;var r=el.getBoundingClientRect(),t=$('.x
   document.body.appendChild(e);var tr=t?t.getBoundingClientRect():{left:innerWidth/2,top:0,width:0};
   requestAnimationFrame(function(){requestAnimationFrame(function(){e.style.transform='translate('+(tr.left+tr.width/2-r.left-r.width/2)+'px,'+(tr.top-r.top-r.height/2)+'px) scale(.6) rotate(90deg)';e.style.opacity='0.2'})});
   setTimeout(function(){e.remove()},800)}
+function flyTo(from,to,tex,delay){if(!from||!to)return;setTimeout(function(){var r=from.getBoundingClientRect(),tr=to.getBoundingClientRect(),e=document.createElement('i');e.className='fly blk';
+  e.style.cssText+=bg(tex)+';left:'+(r.left+r.width/2-17)+'px;top:'+(r.top+r.height/2-17)+'px';document.body.appendChild(e);
+  requestAnimationFrame(function(){requestAnimationFrame(function(){e.style.transform='translate('+(tr.left+tr.width/2-r.left-r.width/2)+'px,'+(tr.top+tr.height/2-r.top-r.height/2)+'px) scale(.7) rotate(180deg)'})});
+  setTimeout(function(){e.remove();to.classList.remove('bump');void to.offsetWidth;to.classList.add('bump');try{sndTap()}catch(x){}},760)},delay||0)}
 var tt;function toast(m){var t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(tt);tt=setTimeout(function(){t.style.display='none'},2600)}
 function overlay(id,html){var o=document.getElementById(id);if(o)o.remove();o=document.createElement('div');o.id=id;o.className='ov';o.innerHTML='<div class="panel pop">'+html+'</div>';document.body.appendChild(o);return o}
-var PRAISE=['挖到寶了！💎','漂亮！⛏️','完美！💯','你是算術礦工！⛏️','太強了！🌟','方塊蓋起來了！🧱','一格一格都算對！👏'];
+var PRAISE=['挖到寶了！💎','漂亮！⛏️','完美！💯','你是算術礦工！⛏️','太強了！🌟','方塊放進背包了！🎒','一格一格都算對！👏'];
 
 /* ---------- 畫面 ---------- */
 var app=$('#app'),view='home',G=null;
-function xpHtml(){var x=xpLevel(D.xp);return '<div class="xp"><b>Lv.'+x.lv+'</b><div class="xpbar"><i style="width:calc('+(x.cur/x.need*100)+'% - 4px)"></i></div><b style="color:#fff">🧱 '+D.blocks+'</b></div>'}
+function xpHtml(){var x=xpLevel(D.xp);return '<div class="xp"><b>Lv.'+x.lv+'</b><div class="xpbar"><i style="width:calc('+(x.cur/x.need*100)+'% - 4px)"></i></div><b style="color:#fff">🎒 '+invTotal()+'</b></div>'}
 function sndBtn(){return '<button class="btn small stone" data-a="sound">'+(D.sound!==false?'🔊':'🔇')+'</button>'}
 function topbar(back){return '<div class="top">'+(back?'<button class="btn small stone" data-a="home">🏠 回首頁</button>':sndBtn())+xpHtml()+'</div>'}
 function go(v){view=v;render()}
-function render(){if(view==='home')home();else if(view==='menu')menu();else if(view==='quiz')drawQ();else if(view==='result')result();else if(view==='house')house();else if(view==='stats')stats();window.scrollTo(0,0)}
-function greet(){var h=new Date().getHours(),acc=D.hist.length;return acc?['今天也來挖幾題直式吧！','從個位開始，一格一格算，就不會錯喔！','答對一題，就幫你蓋一塊方塊！','進位、退位，我們一起搞定！'][rnd(4)]:'嗨！我是阿方！答對直式，我們一起蓋房子！'}
+function render(){if(view==='home')home();else if(view==='menu')menu();else if(view==='quiz')drawQ();else if(view==='result')result();else if(view==='house'||view==='build')buildView();else if(view==='stats')stats();window.scrollTo(0,0)}
+function greet(){var h=new Date().getHours(),acc=D.hist.length;return acc?['今天也來挖幾題直式吧！','從個位開始，一格一格算，就不會錯喔！','答對就有方塊放進背包，你自己來蓋房子！','進位、退位，我們一起搞定！'][rnd(4)]:'嗨！我是阿方！答對直式賺方塊，蓋出你自己的世界！'}
 function home(){var W=Math.min(app.clientWidth-28,560);
   app.innerHTML=topbar(false)+'<h1>直式加減小達人</h1><div class="sub">⛏️ 方塊世界篇 ⛏️</div>'+
   '<div class="buddy">'+buddy(96)+'<div class="bubble">'+greet()+'</div></div>'+
-  '<div data-a="house" style="cursor:pointer">'+worldHtml(D.blocks,null,W)+'</div>'+
+  miniWorld(W)+'<div class="mid" style="font-size:20px;margin-top:6px;color:#2c4a1e">🎒 背包裡有 '+invTotal()+' 塊方塊</div>'+
   '<div class="grid g2" style="margin-top:20px"><button class="btn" style="grid-column:1/-1;font-size:36px;padding:26px" data-a="menu">⛏️ 開始挑戰</button>'+
-  '<button class="btn wood" data-a="house">🏠 我的方塊屋</button><button class="btn blue" data-a="stats">📊 練習紀錄</button>'+
-  '<button class="btn stone" style="grid-column:1/-1;font-size:22px" data-a="stats" data-s="1">⚙️ 家長設定</button></div>'}
+  '<button class="btn wood" data-a="build">🏠 我的世界</button><button class="btn blue" data-a="stats">📊 練習紀錄</button>'+
+  '<button class="btn stone" style="grid-column:1/-1;font-size:22px" data-a="stats" data-s="1">⚙️ 家長設定</button></div>';drawMini(W);migNote()}
+function migNote(){if(typeof D.migNote!=='number'||$('#migov'))return;var n=D.migNote;D.migNote=true;save();
+  overlay('migov','<div style="display:flex;justify-content:center">'+buddy(90)+'</div><div style="font-size:30px;color:#c2410c;margin:8px 0">⛏️ 阿方有話要說！</div><div style="font-size:24px;line-height:1.5">以後房子要<b>你自己蓋</b>囉！<br>你之前挖到的 <b>'+n+'</b> 塊方塊，<br>我都放進你的背包了 🎒</div>'+
+  '<div class="grid" style="gap:12px;margin-top:16px"><button class="btn gold" style="font-size:32px" data-a="build">🏠 去蓋房子！</button><button class="btn small stone" style="justify-self:center" data-a="ovclose" data-o="migov">等一下</button></div>')}
 function recommend(){var best=null;for(var k=1;k<=6;k++){if(!mastered(k)){best=k;break}}return best||7}
+function unlTxt(k){var n=BT.filter(function(b){return b.u===k}).map(function(b){return b.n});if(!n.length)return '';return '<span class="u">'+(D.unl[k]?'🔓 已解鎖：':'🔒 精通解鎖：')+n.join('、')+'</span>'}
 function menu(){var rec=recommend(),h=topbar(true)+'<h2>⛏️ 選一個礦坑挑戰</h2>';
   for(var k=1;k<=7;k++){var L=LV[k],s=D.lv[k],st=lvStars(k),a=lvAcc(k);
-    h+='<div class="lvrow" data-a="start" data-n="'+k+'">'+(k===rec?'<span class="tag">推薦</span>':'')+icon(L.ore)+'<div class="t"><b>'+k+'. '+L.name+'</b><span>'+L.sub+'・'+L.oreN+'</span></div><div class="ex">'+L.ex+'</div>'+
+    h+='<div class="lvrow" data-a="start" data-n="'+k+'">'+(k===rec?'<span class="tag">推薦</span>':'')+icon(L.ore)+'<div class="t"><b>'+k+'. '+L.name+'</b><span>'+L.sub+'・'+L.oreN+'</span>'+unlTxt(k)+'</div><div class="ex">'+L.ex+'</div>'+
     '<div class="st">'+'★★★'.slice(0,st)+'<span style="color:#8a8a8a">'+'☆☆☆'.slice(0,3-st)+'</span><small>'+(s&&s.n?'一次就對 '+Math.round(a*100)+'%':'還沒挑戰')+'</small></div></div>'}
-  app.innerHTML=h+'<div class="mid" style="font-size:18px;color:#2c4a1e">越難的礦坑，答對一題蓋越多方塊！（1～2 塊 → 鑽石礦 4～5 塊）</div>'}
+  app.innerHTML=h+'<div class="mid" style="font-size:18px;color:#2c4a1e">答對一題就挖到方塊放進背包！越難的礦坑挖越多（1～2 塊 → 鑽石礦 4～5 塊）<br>精通礦坑還能解鎖稀有方塊喔！</div>'}
 
 /* ---------- 一輪挑戰 ---------- */
 function startLevel(k){var L=LV[k],q=[],avoid=[];
   for(var i=0;i<L.N;i++){var P=genLevel(k,avoid);if(!P)continue;avoid.push(P.key);q.push(P)}
-  G={k:k,q:q,i:0,N:q.length,first:0,gained:0,b0:D.blocks,re:{}};view='quiz';newQ()}
+  G={k:k,q:q,i:0,N:q.length,first:0,gained:0,b0:D.blocks,re:{},got:{},unl:[]};view='quiz';newQ()}
 function newQ(){var P=G.q[G.i];var n=P.W;
   G.S={P:P,done:[],car:[],cross:[],box:[],pre:[],preAt:[],act:null,wr:{},miss:false,ghost:{},marks:[],hintN:0,lock:false};
   G.guide=LV[G.k].guide||D.guideAll;hintTxt='';hintBig=false;nextAct(false);if(!hintTxt&&G.i===0)setHint('從最右邊的個位開始算喔！');drawQ()}
@@ -445,21 +564,27 @@ function solved(){var S=G.S,P=S.P,ok=!S.miss,isRe=!!P.re;S.lock=true;
   var gain=isRe?(ok?Math.ceil(P.xp/2):0):(ok?P.xp:1);
   recSk(P.tag,ok);if(!isRe){recLv(G.k,ok);if(ok)G.first++;sxLog(P.tag,ok,P.xp)}
   if(S.miss&&!isRe){var c={};for(var k in P)c[k]=P[k];c.re=true;G.q.push(c)} /* 答錯的題目，這一輪最後再練一次 */
-  var lv0=xpLevel(D.xp).lv;D.xp+=gain;D.blocks+=gain;G.gained+=gain;save();
+  var lv0=xpLevel(D.xp).lv;D.xp+=gain;D.blocks+=gain;G.gained+=gain;earn(gain,G.k,G.got);var nu=updateUnlocks();if(nu.length){G.unl=G.unl.concat(nu);setTimeout(function(){toast('🔓 解鎖新方塊：'+nu.join('、')+'！')},1100)}save();
   sndOk();confetti(ok?50:20);var m=$('#msg');if(m){m.textContent=(ok?PRAISE[rnd(PRAISE.length)]:'完成了！下次會更好 💪')+(gain?'　🧱 +'+gain:'');m.classList.add('pop')}
   setHint(ok?'答案是 '+P.r+'！':'答案是 '+P.r+'，這題等一下再練一次喔');
   if(ok)say(['ok1','ok2','ok3'][rnd(3)]);
   if(xpLevel(D.xp).lv>lv0)setTimeout(function(){sndLvUp();toast('⬆️ 升級！Lv.'+xpLevel(D.xp).lv)},700);
   var g=G;setTimeout(function(){if(view!=='quiz'||G!==g)return;G.i++;if(G.i>=G.q.length)finish();else newQ()},1700)}
-function finish(){var bonus=0;if(G.first===G.N&&G.N>=5){bonus=LV[G.k].base*2;D.xp+=bonus;D.blocks+=bonus;G.gained+=bonus}G.bonus=bonus;
-  D.hist=(D.hist||[]).concat([{k:G.k,t:now(),n:G.N,f:G.first}]).slice(-60);save();view='result';render();sndWin();confetti(140);
+function finish(){var bonus=0;if(G.first===G.N&&G.N>=5){bonus=LV[G.k].base*2;D.xp+=bonus;D.blocks+=bonus;G.gained+=bonus;earn(bonus,G.k,G.got)}G.bonus=bonus;
+  D.hist=(D.hist||[]).concat([{k:G.k,t:now(),n:G.N,f:G.first}]).slice(-60);save();view='result';render();sndWin();confetti(140);flyGot();
   var p=G.first/G.N;setTimeout(function(){if(view==='result')say(p===1?'ok3':p>=.6?'ok2':'try1')},800);
   var sy=sxSync();setTimeout(function(){sy.then(function(){if(view==='result'&&!$('#nudge')&&!sxCheck())nudgeCheck()})},2600)}
-function result(){var p=G.first/G.N,W=Math.min(app.clientWidth-28,760);
+function result(){var p=G.first/G.N,got=G.got||{},ids=BT.map(function(b){return b.id}).filter(function(t){return got[t]});
   app.innerHTML=topbar(false)+'<h1>'+(p>=.9?'太厲害了！':p>=.6?'表現很棒！':'再接再厲！')+'</h1>'+
-  '<div class="buddy">'+buddy(88)+'<div class="bubble">一次就算對 <b>'+G.first+' / '+G.N+'</b> 題<br>這次蓋了 🧱 <b>'+G.gained+'</b> 塊方塊'+(G.bonus?'（全對獎勵 +'+G.bonus+'）':'')+'</div></div>'+
-  worldHtml(D.blocks,G.b0,W)+
-  '<div class="grid g2" style="margin-top:18px"><button class="btn" data-a="again">🔁 再挑戰一次</button><button class="btn blue" data-a="menu">⛏️ 換個礦坑</button><button class="btn stone" style="grid-column:1/-1" data-a="home">🏠 回首頁</button></div>'}
+  '<div class="buddy">'+buddy(88)+'<div class="bubble">一次就算對 <b>'+G.first+' / '+G.N+'</b> 題<br>這次挖到 🧱 <b>'+G.gained+'</b> 塊方塊'+(G.bonus?'（全對獎勵 +'+G.bonus+'）':'')+'<br>阿方：快去蓋你的世界吧！加油！</div></div>'+
+  '<div class="gotrow">'+ids.map(function(t){return '<span class="got" id="got-'+t+'">'+icon(t,40)+BTI[t].n+' ×'+got[t]+'</span>'}).join('')+'</div>'+
+  (G.unl&&G.unl.length?'<div class="unl">🔓 解鎖新方塊：'+G.unl.join('、')+'！</div>':'')+
+  '<div style="text-align:center;margin:8px 0">'+bagHtml()+'</div>'+
+  '<button class="btn gold" style="font-size:40px;padding:26px;margin-top:12px" data-a="build">🏠 去蓋房子！</button>'+
+  '<div class="grid g2" style="margin-top:16px"><button class="btn" data-a="again">🔁 再挑戰一次</button><button class="btn blue" data-a="menu">⛏️ 換個礦坑</button><button class="btn stone" style="grid-column:1/-1" data-a="home">🏠 回首頁</button></div>'}
+function flyGot(){var bag=$('#bag'),got=G.got||{},k=0,bn=$('#bagn'),tot=invTotal(),start=tot-G.gained;if(bn)bn.textContent=Math.max(0,start);
+  BT.forEach(function(b){var n=got[b.id];if(!n)return;var el=document.getElementById('got-'+b.id);for(var j=0;j<Math.min(n,4);j++){flyTo(el,bag,b.id,300+k*140);k++}});
+  var step=Math.max(1,Math.ceil(G.gained/20)),cur=Math.max(0,start),iv=setInterval(function(){cur=Math.min(tot,cur+step);var e=$('#bagn');if(e&&view==='result')e.textContent=cur;if(cur>=tot||view!=='result')clearInterval(iv)},90)}
 
 /* ---------- 換個礦坑挑戰看看（溫和提醒） ---------- */
 /* 連續 3 輪（或今天這關 5 輪以上且佔今天 7 成以上）都玩同一關，而且這關已經很熟、
@@ -482,7 +607,7 @@ function nudgeInfo(){var h=D.hist||[];if(!h.length)return null;var k=h[h.length-
 function nudgeCheck(){var x=nudgeInfo();if(!x||!x.rec.length||$('#nudge'))return false;D.nudge={k:x.k,t:now()};save();
   var nm=function(a){return '「'+a+'. '+LV[a].name+'（'+LV[a].sub.replace(/（.*）/,'')+'）」'};
   var why=x.mastered?'「'+LV[x.k].oreN+'礦坑」你已經挖得超熟了！⭐':'你已經'+(x.streak>=3?'連續挖了 '+x.streak+' 輪':'今天挖了 '+x.today+' 輪')+'「'+LV[x.k].oreN+'礦坑」，好認真！💪';
-  var tip=['厲害的礦工會去不同的礦坑找寶藏！去挑戰'+nm(x.rec[0])+'，說不定挖到'+LV[x.rec[0]].oreN+'喔！','換個礦坑，蓋房子的方塊會更多喔！試試'+nm(x.rec[0])+'吧！'][rnd(2)];
+  var tip=['厲害的礦工會去不同的礦坑找寶藏！去挑戰'+nm(x.rec[0])+'，說不定挖到'+LV[x.rec[0]].oreN+'喔！','換個礦坑，挖到的方塊會更多喔！試試'+nm(x.rec[0])+'吧！'][rnd(2)];
   overlay('nudge','<div style="display:flex;justify-content:center">'+buddy(90)+'</div><div style="font-size:30px;color:#c2410c;margin:8px 0">⛏️ 阿方有話要說！</div><div style="font-size:23px;line-height:1.5">'+why+'<br>'+tip+'</div><div class="grid" style="gap:14px;margin-top:16px">'+
    x.rec.map(function(a,i){return '<button class="btn '+(i?'blue':'')+'" data-a="nudgego" data-n="'+a+'">'+icon(LV[a].ore,36)+' 去挑戰 '+a+'. '+LV[a].name+'</button>'}).join('')+
    '<button class="btn small stone" style="justify-self:center" data-a="nudgeclose">再玩一下這一關</button></div>');try{sndOk()}catch(e){}return true}
@@ -534,12 +659,6 @@ function sxShow(e){if($('#sxov'))return;var n=$('#nudge');if(n)n.remove();
   '<button class="btn" style="display:inline-block;width:auto;font-size:30px;padding:16px 40px" data-a="sxtake">🙌 收下</button>');
   try{sndWin();setTimeout(function(){confetti(180)},900)}catch(x){}}
 
-/* ---------- 方塊屋 ---------- */
-function house(){var W=Math.min(app.clientWidth-28,900),at=bpAt(D.blocks),list=[];for(var i=0;i<at.i;i++)list.push(bpName(i));
-  app.innerHTML=topbar(true)+'<h2>🏠 我的方塊屋</h2>'+worldHtml(D.blocks,null,W)+
-  '<div class="panel" style="font-size:22px;line-height:1.6">🧱 總共蓋了 <b>'+D.blocks+'</b> 塊方塊<br>'+(list.length?'✅ 已經蓋好：'+list.map(esc).join('、'):'第一棟房子蓋好以後，會開始蓋下一棟喔！')+
-  '<br><span style="font-size:18px">答對一題就蓋方塊；越難的關卡蓋越多塊，一輪全對還有獎勵！</span></div>'}
-
 /* ---------- 練習紀錄與家長設定 ---------- */
 function bar(p,col){return '<div class="sbar"><i style="width:calc('+Math.round(p*100)+'% - 4px);background:'+col+'"></i></div>'}
 function stats(toSet){var h=topbar(true)+'<h2>📊 練習紀錄（給爸媽看）</h2><div class="panel"><b style="font-size:24px">各關卡</b>';
@@ -565,19 +684,27 @@ function stats(toSet){var h=topbar(true)+'<h2>📊 練習紀錄（給爸媽看�
   app.innerHTML=h;if(toSet===true){var el=$('#settings');if(el)setTimeout(function(){el.scrollIntoView({block:'start'})},50)}}
 function doImport(txt){var o;try{o=JSON.parse(String(txt).trim())}catch(e){toast('代碼格式不正確');return}if(o&&o.app==='column'&&o.data)o=o.data;
   if(!o||typeof o.lv!=='object'||typeof o.sk!=='object'){toast('這不是直式加減的紀錄');return}
-  if(!confirm('用匯入的紀錄取代目前的紀錄嗎？'))return;var b=blank();for(var k in b)b[k]=o[k]!==undefined?o[k]:b[k];D=b;save();toast('匯入成功！');go('home')}
+  if(!confirm('用匯入的紀錄取代目前的紀錄嗎？'))return;var b=blank();for(var k in b)b[k]=o[k]!==undefined?o[k]:b[k];if(o.v===undefined)b.v=1;D=b;UNDO=[];migrate();save();toast('匯入成功！');go('home')}
 
 /* ---------- 事件 ---------- */
 document.addEventListener('click',function(e){var el=e.target.closest('[data-a]');if(!el)return;var a=el.dataset.a;ac();
   switch(a){
     case 'home':G=null;go('home');break;
     case 'menu':go('menu');break;
-    case 'house':go('house');break;
+    case 'house':case 'build':{['migov','nudge','sxov'].forEach(function(id){var o=document.getElementById(id);if(o&&id!=='sxov')o.remove()});if($('#sxov'))break;go('build');break}
+    case 'hb':{var t=el.dataset.t,b=BTI[t];if(!isUnl(b)&&!(D.inv[t]|0)){toast('🔒 精通「'+b.u+'. '+LV[b.u].name+'（'+LV[b.u].sub+'）」礦坑，就能解鎖「'+b.n+'」！');break}
+      bsel=t;btool='place';sndTap();document.querySelectorAll('.hb.sel').forEach(function(x){x.classList.remove('sel')});el.classList.add('sel');$('#t-place').classList.add('on');$('#t-dig').classList.remove('on');binfo();break}
+    case 'tool':btool=el.dataset.t;sndTap();$('#t-place').classList.toggle('on',btool==='place');$('#t-dig').classList.toggle('on',btool==='dig');
+      document.querySelectorAll('.hb.sel').forEach(function(x){x.classList.remove('sel')});if(btool==='place'){var hb=document.getElementById('hb-'+bsel);if(hb)hb.classList.add('sel')}binfo();break;
+    case 'bundo':bUndo();break;
+    case 'bclear':if(confirm('把世界裡所有方塊都收回背包嗎？'))bClear();break;
+    case 'bp':D.bp=D.bp+1>=BP.length?-1:D.bp+1;save();sndTap();$('#t-bp').textContent=bpLabel();redraw();binfo();break;
+    case 'ovclose':{var oc=document.getElementById(el.dataset.o);if(oc)oc.remove();break}
     case 'stats':view='stats';stats(!!el.dataset.s);if(!el.dataset.s)window.scrollTo(0,0);break;
     case 'sound':D.sound=D.sound===false;save();if(D.sound)sndOk();home();break;
     case 'start':startLevel(+el.dataset.n);break;
     case 'again':startLevel(G.k);break;
-    case 'quit':if(confirm('要結束這次挑戰嗎？（已經蓋的方塊會保留）')){G=null;go('home')}break;
+    case 'quit':if(confirm('要結束這次挑戰嗎？（已經挖到的方塊會留在背包）')){G=null;go('home')}break;
     case 'key':onKey(el.dataset.k);break;
     case 'car':if(G&&G.S&&!G.S.lock)placeCarry(+el.dataset.i);break;
     case 'top':if(G&&G.S)tapTop(+el.dataset.i);break;
@@ -588,14 +715,14 @@ document.addEventListener('click',function(e){var el=e.target.closest('[data-a]'
     case 'testvoice':say('ok3');break;
     case 'export':{var t=JSON.stringify({app:'column',exported:new Date().toISOString(),data:D}),ta=$('#code');ta.value=t;ta.focus();ta.select();var ok=false;try{ok=document.execCommand('copy')}catch(x){}toast(ok?'已複製！到另一台 iPad 貼上就可以匯入':'請長按文字全選後拷貝');break}
     case 'import':{var v=$('#code').value;if(!v.trim()){toast('請先把代碼貼到框框裡');break}doImport(v);break}
-    case 'reset':if(confirm('確定清除所有紀錄、經驗值和方塊屋？')){var keep={sound:D.sound,voice:D.voice,guideAll:D.guideAll};D=blank();for(var k in keep)D[k]=keep[k];save();stats()}break;
+    case 'reset':if(confirm('確定清除所有紀錄、經驗值、背包和我的世界？')){var keep={sound:D.sound,voice:D.voice,guideAll:D.guideAll};D=blank();for(var k in keep)D[k]=keep[k];UNDO=[];migrate();save();stats()}break;
   }});
 document.addEventListener('change',function(e){var id=e.target.id,v=e.target.checked;
   if(id==='s_sound'){D.sound=v;save();if(v)sndOk()}else if(id==='s_voice'){D.voice=v;save();if(v)say('ok2')}else if(id==='s_guide'){D.guideAll=v;save();toast(v?'每一關都會一步一步帶著做':'只有第 2、4 關會一步一步帶著做')}});
 document.addEventListener('keydown',function(e){if(view!=='quiz')return;if(/^[0-9]$/.test(e.key))onKey(e.key);else if(e.key==='Backspace')onKey('del')});
-window.addEventListener('resize',function(){var c=$('#fx');c.width=innerWidth;c.height=innerHeight});
+var rzT;window.addEventListener('resize',function(){var c=$('#fx');c.width=innerWidth;c.height=innerHeight;clearTimeout(rzT);rzT=setTimeout(function(){if(view==='build'&&!stroke)buildView()},150)});
 
-window.__col={x:{ev:sxEval,ck:sxCheck,take:sxTake,sync:sxSync,dec:sxDecode},build:build,genTag:genTag,genLevel:genLevel,colHint:colHint,nudgeInfo:nudgeInfo,nudgeCheck:nudgeCheck,D:function(){return D},G:function(){return G},startLevel:startLevel,newQ:newQ,onKey:onKey,tapTop:tapTop,placeCarry:placeCarry,bpAt:bpAt,BP:BP,LV:LV,go:go,setD:function(x){D=x;save()}};
+window.__col={x:{ev:sxEval,ck:sxCheck,take:sxTake,sync:sxSync,dec:sxDecode},build:build,genTag:genTag,genLevel:genLevel,colHint:colHint,nudgeInfo:nudgeInfo,nudgeCheck:nudgeCheck,D:function(){return D},G:function(){return G},startLevel:startLevel,newQ:newQ,onKey:onKey,tapTop:tapTop,placeCarry:placeCarry,bpAt:bpAt,BP:BP,LV:LV,go:go,setD:function(x){D=x;save()},BT:BT,WA:function(){return WA},earn:earn,migrate:migrate,invTotal:invTotal,bpCells:bpCells,bpProg:bpProg,undo:function(){return UNDO.length},load:load};
 buildTextures();load();sxSync();
 (document.fonts&&document.fonts.load?document.fonts.load('40px PixelTC','直式0').catch(function(){}):Promise.resolve()).then(function(){render()});
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
