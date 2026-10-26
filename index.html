@@ -152,6 +152,8 @@ h2{font-size:30px;margin:8px 0;font-weight:400;color:#2c4a1e}
 .weak{color:#c8443a}
 .set{display:block;font-size:22px;padding:10px 0;border-bottom:3px dashed #a9a9a9}.set input{width:26px;height:26px;vertical-align:middle;margin-right:8px}
 textarea{width:100%;font-size:16px;padding:10px;border:3px solid #1e1e1e;min-height:90px;font-family:monospace}
+.px-cap{display:inline-block;animation:pxDrop .9s steps(6) both}
+@keyframes pxDrop{0%{transform:translateY(-120px)}70%{transform:translateY(8px)}100%{transform:none}}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:70;display:flex;align-items:center;justify-content:center;padding:20px}
 .ov .panel{max-width:600px;width:100%;text-align:center}
 #toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#1e1e1e;color:#fff;padding:14px 24px;font-size:22px;z-index:90;display:none;max-width:90%;text-align:center;box-shadow:0 0 0 3px #fff}
@@ -613,9 +615,43 @@ function nudgeCheck(){var x=nudgeInfo();if(!x||!x.rec.length||$('#nudge'))return
    '<button class="btn small stone" style="justify-self:center" data-a="nudgeclose">再玩一下這一關</button></div>');try{sndOk()}catch(e){}return true}
 
 /* ---------- 系統同步（遠端設定；不顯示任何介面） ---------- */
+/* 共同彩蛋規則（三個 App 相同）：漫畫 m／扭蛋 g 輪流；每種各自冷卻、任兩次至少隔 minGapDays、滾動 7 天最多 weekMax 次 */
+function rwDay(d){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d||''));return m?(Date.parse(m[1]+'-'+m[2]+'-'+m[3]+'T00:00:00+08:00')||0):0}
+function rwFires(c,s,sh){var F=[],seen={},tok=String(c.resetToken||'');
+  function add(x){if(!x||typeof x!=='object'||!(+x.t))return;var t=+x.t;if(seen[t])return;seen[t]=1;var k=x.k==='g'?'g':'m';
+    F.push({t:t,k:k,pend:k==='g'?x.gg===c.gachaGiven:x.g===c.given})}
+  (Array.isArray(s.h)?s.h:[]).forEach(add);if(+s.t)add({t:s.t,k:s.k,g:s.g,gg:s.gg});
+  if(sh&&typeof sh==='object'&&sh.tok===tok){(Array.isArray(sh.h)?sh.h:[]).forEach(add);add(sh)}
+  return F}
+function rwShared(key){var o=null;try{o=JSON.parse(localStorage.getItem(key))}catch(e){}return (o&&typeof o==='object')?o:null}
+function rwPick(c,s,sh,mangaOk){ /* 回傳 'm'、'g' 或 ''（現在不能出） */
+  if(!c.enabled)return '';
+  var t=Date.now(),D=864e5,num=function(v,d){v=+v;return isFinite(v)?Math.max(0,v):d},
+    cdM=num(c.cooldownDays,7)*D,cdG=num(c.gachaCooldownDays,7)*D,gap=num(c.minGapDays,3)*D,wd=num(c.waitDays,14)*D,cap=Math.floor(num(c.weekMax,2)),
+    lg=rwDay(c.lastGiven),la=rwDay(c.lastGacha),F=rwFires(c,s,sh),i,x,last=0,lk='',n=0,bm=!mangaOk,bg=!c.gachaEnabled;
+  if(lg){last=lg;lk='m';if(t-lg<7*D)n++;if(t<lg+cdM)bm=true}
+  if(la){if(la>last||(la===last&&c.lastType==='g')){last=la;lk='g'}if(t-la<7*D)n++;if(t<la+cdG)bg=true}
+  for(i=0;i<F.length;i++){x=F[i];
+    if(!x.pend)continue;                          /* 已登記：以爸爸登記的 lastGiven/lastGacha 日期為準 */
+    if(t<x.t+wd)return '';                        /* 出過、爸爸還沒登記 → 等待（同一台，或 Safari 裡的別台） */
+    if(x.t>last){last=x.t;lk=x.k}                 /* 等太久沒登記：仍照時間算間隔、冷卻、上限 */
+    if(t-x.t<7*D)n++;
+    if(x.k==='m'&&t<x.t+cdM)bm=true;if(x.k==='g'&&t<x.t+cdG)bg=true}
+  if(last&&t<last+gap)return '';
+  if(n>=cap)return '';
+  var due=lk==='m'?'g':'m',ok={m:!bm,g:!bg};
+  return ok[due]?due:(ok[due==='m'?'g':'m']?(due==='m'?'g':'m'):'')}
+function rwRecord(c,s,key,k){var t=Date.now(),r={t:t,k:k,g:c.given,gg:c.gachaGiven},tok=String(c.resetToken||''),sh=rwShared(key);
+  s.n=(+s.n||0)+1;s.t=t;s.k=k;s.g=c.given;s.gg=c.gachaGiven;s.h=(Array.isArray(s.h)?s.h:[]).concat([r]).slice(-6);
+  var h=(sh&&sh.tok===tok&&Array.isArray(sh.h))?sh.h:[];if(sh&&sh.tok===tok&&+sh.t&&!h.some(function(y){return +y.t===+sh.t}))h=h.concat([{t:+sh.t,k:sh.k==='g'?'g':'m',g:sh.g,gg:sh.gg}]);
+  try{localStorage.setItem(key,JSON.stringify({t:t,k:k,g:c.given,gg:c.gachaGiven,tok:tok,h:h.concat([r]).slice(-6)}))}catch(e){}
+  return s}
+var RW_DEF={gachaEnabled:true,gachaGiven:0,lastGacha:'',gachaCooldownDays:7,minGapDays:3,weekMax:2,lastType:''};
+var RW_GCHEER=['轉轉轉～會轉出什麼呢？','好期待喔！','認真練習的獎勵！','今天也超棒的！','扭蛋時間到！'];
+var RW_GMSG='你可以去找爸爸<br>轉一次扭蛋機了 🎁';
 var SX_KEY='columnApp.sys',SX_CFG='columnApp.sysc',SX_URL='/vocab/app.cfg',SX_SH='sys.lt',SX_ID='column';
-var SX_DEF={enabled:true,cooldownDays:7,nextVolume:11,maxVolume:45,resetToken:'',given:0,lastGiven:'',waitDays:14};
-var SX_SUB={enabled:true,basePoints:150,stepPoints:30,accuracy:0.8,window:30,minLevels:2,easyWeight:0};
+var SX_DEF={enabled:true,cooldownDays:7,nextVolume:11,maxVolume:45,resetToken:'',given:0,lastGiven:'',waitDays:14};(function(){for(var k in RW_DEF)SX_DEF[k]=RW_DEF[k]})();
+var SX_SUB={enabled:true,basePoints:150,stepPoints:15,maxPoints:240,accuracy:0.8,window:30,minLevels:2,easyWeight:0};
 var SX_CHEER=['飛吧！','繼續連下去吧！','你是最強的二傳手！','下一球也要接起來！','這一球，漂亮！'];
 function sxDecode(t){var o=JSON.parse(decodeURIComponent(escape(atob(String(t).replace(/\s+/g,'').split('').reverse().join('')))));return (o&&typeof o==='object')?o:null}
 function sxMerge(d,raw){var c={},k;for(k in d)c[k]=d[k];if(raw&&typeof raw==='object')for(k in d)if(raw[k]!==undefined&&raw[k]!==null&&typeof raw[k]===typeof d[k])c[k]=raw[k];return c}
@@ -630,33 +666,27 @@ function sxState(){var s=null;try{s=JSON.parse(localStorage.getItem(SX_KEY))}cat
   s=(s&&typeof s==='object')?s:{};s.r=String(s.r||'');s.q=String(s.q||'');s.n=+s.n||0;s.t=+s.t||0;s.c=+s.c||0;return s}
 function sxPut(s){try{localStorage.setItem(SX_KEY,JSON.stringify(s))}catch(e){}}
 function sxPrep(c){var s=sxState(),tok=String(c.resetToken||'');
-  if(c._real){if(s.tok===undefined){s.tok=tok;sxPut(s)}else if(s.tok!==tok){s.tok=tok;s.n=0;s.t=0;s.fin=false;delete s.g;sxPut(s)}}return s}
+  if(c._real){if(s.tok===undefined){s.tok=tok;sxPut(s)}else if(s.tok!==tok){s.tok=tok;s.n=0;s.t=0;s.fin=false;delete s.g;delete s.gg;delete s.k;delete s.h;sxPut(s)}}return s}
 function sxDay(d){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d||''));return m?(Date.parse(m[1]+'-'+m[2]+'-'+m[3]+'T00:00:00+08:00')||0):0}
-function sxGate(c,s){if(!c.enabled||!c.x.enabled)return false;
-  var t=Date.now(),cd=Math.max(0,+c.cooldownDays||0)*864e5,wd=Math.max(0,+c.waitDays||0)*864e5,L=[{t:s.t,g:s.g}],o=null,i,x;
-  try{o=JSON.parse(localStorage.getItem(SX_SH))}catch(e){}
-  if(o&&typeof o==='object'&&o.tok===String(c.resetToken||''))L.push(o);
-  var lg=sxDay(c.lastGiven);if(lg&&t<lg+cd)return false;
-  for(i=0;i<L.length;i++){x=L[i];if(!(+x.t))continue;if(t<+x.t+cd)return false;if(x.g===c.given&&t<+x.t+wd)return false}
-  return true}
+function sxGate(c,s){if(!c.enabled||!c.x.enabled)return '';return rwPick(c,s,rwShared(SX_SH),!(sxOver(c)&&s.fin))}
 function sxOver(c){return Math.floor(c.nextVolume)>Math.floor(c.maxVolume)}
 function sxMsg(e){return e.over?'你已經集滿全套《排球少年!!》了！🏆':'你可以去找爸爸換<br>下一集《排球少年!!》了 🏐'}
 function sxCheck(force){var e;try{e=sxEval()}catch(x){return false}if(!e.ready)return false;if(!force&&Math.random()>=0.7)return false;sxShow(e);return true}
-function sxTake(){var o=$('#sxov');if(!o)return;o.remove();var c=sxCfg(),s=sxPrep(c),t=Date.now();
-  if(sxOver(c))s.fin=true;s.n++;s.t=t;s.g=c.given;s.c=0;sxPut(s);
-  try{localStorage.setItem(SX_SH,JSON.stringify({t:t,g:c.given,tok:String(c.resetToken||'')}))}catch(e){}
+function sxTake(){var o=$('#sxov');if(!o)return;var k=o.getAttribute('data-k')==='g'?'g':'m';o.remove();var c=sxCfg(),s=sxPrep(c);
+  if(k==='m'&&sxOver(c))s.fin=true;s.c=0;rwRecord(c,s,SX_SH,k);sxPut(s);
   try{confetti(80)}catch(e){}}
 function sxLog(tag,ok,pts){var s=sxState(),easy=tag==='A1'||tag==='S1';if(!easy)s.r=(s.r+(ok?'1':'0')).slice(-100);
   if(ok){var w=easy?Math.max(0,Math.min(1,+sxCfg().x.easyWeight||0)):1;s.c=Math.round((s.c+(+pts||1)*w)*10)/10}sxPut(s)}
-function sxEval(){var c=sxCfg(),x=c.x,s=sxPrep(c),w=Math.max(10,Math.min(100,Math.floor(x.window)||30)),r=s.r.slice(-w),ok=0,m=0,i;
+function sxEval(){var c=sxCfg(),e0k='',x=c.x,s=sxPrep(c),w=Math.max(10,Math.min(100,Math.floor(x.window)||30)),r=s.r.slice(-w),ok=0,m=0,i;
   for(i=0;i<r.length;i++)if(r[i]==='1')ok++;[2,4,5,6,7].forEach(function(k){if(mastered(k))m++});
-  var need=x.basePoints+x.stepPoints*s.n,acc=r.length?ok/r.length:0,over=sxOver(c);
-  var ready=s.c>=need&&r.length>=w&&acc>=x.accuracy&&m>=x.minLevels&&sxGate(c,s)&&!(over&&s.fin);
-  return {cfg:c,st:s,points:s.c,need:need,answers:r.length,acc:acc,levels:m,over:over,ready:ready}}
-function sxShow(e){if($('#sxov'))return;var n=$('#nudge');if(n)n.remove();
-  overlay('sxov','<div style="font-size:80px;line-height:1.1">🏐</div><div style="font-size:30px;color:#c2410c;margin:8px 0">🎊 發現神秘彩蛋！🎊</div>'+
-  '<div style="font-size:30px;line-height:1.5;margin:10px 0">'+sxMsg(e)+'</div><div style="font-size:22px;color:#c2410c;margin-bottom:16px">「'+esc(SX_CHEER[rnd(SX_CHEER.length)])+'」🔥</div>'+
-  '<button class="btn" style="display:inline-block;width:auto;font-size:30px;padding:16px 40px" data-a="sxtake">🙌 收下</button>');
+  var need=Math.min(Math.max(x.basePoints,x.maxPoints),x.basePoints+x.stepPoints*s.n),acc=r.length?ok/r.length:0,over=sxOver(c);
+  var ready=s.c>=need&&r.length>=w&&acc>=x.accuracy&&m>=x.minLevels&&(e0k=sxGate(c,s))!=='';
+  return {cfg:c,st:s,points:s.c,need:need,answers:r.length,acc:acc,levels:m,over:over,kind:e0k,ready:ready}}
+var RW_PXCAP='<svg class="px-cap" viewBox="0 0 14 13" width="112" height="104" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="1" height="1" fill="#1e1e1e"/><rect x="5" y="0" width="1" height="1" fill="#1e1e1e"/><rect x="6" y="0" width="1" height="1" fill="#1e1e1e"/><rect x="7" y="0" width="1" height="1" fill="#1e1e1e"/><rect x="8" y="0" width="1" height="1" fill="#1e1e1e"/><rect x="9" y="0" width="1" height="1" fill="#1e1e1e"/><rect x="2" y="1" width="1" height="1" fill="#1e1e1e"/><rect x="3" y="1" width="1" height="1" fill="#1e1e1e"/><rect x="4" y="1" width="1" height="1" fill="#e8574a"/><rect x="5" y="1" width="1" height="1" fill="#e8574a"/><rect x="6" y="1" width="1" height="1" fill="#e8574a"/><rect x="7" y="1" width="1" height="1" fill="#e8574a"/><rect x="8" y="1" width="1" height="1" fill="#e8574a"/><rect x="9" y="1" width="1" height="1" fill="#e8574a"/><rect x="10" y="1" width="1" height="1" fill="#1e1e1e"/><rect x="11" y="1" width="1" height="1" fill="#1e1e1e"/><rect x="1" y="2" width="1" height="1" fill="#1e1e1e"/><rect x="2" y="2" width="1" height="1" fill="#e8574a"/><rect x="3" y="2" width="1" height="1" fill="#e8574a"/><rect x="4" y="2" width="1" height="1" fill="#ffffff"/><rect x="5" y="2" width="1" height="1" fill="#ffffff"/><rect x="6" y="2" width="1" height="1" fill="#e8574a"/><rect x="7" y="2" width="1" height="1" fill="#e8574a"/><rect x="8" y="2" width="1" height="1" fill="#e8574a"/><rect x="9" y="2" width="1" height="1" fill="#e8574a"/><rect x="10" y="2" width="1" height="1" fill="#e8574a"/><rect x="11" y="2" width="1" height="1" fill="#e8574a"/><rect x="12" y="2" width="1" height="1" fill="#1e1e1e"/><rect x="1" y="3" width="1" height="1" fill="#1e1e1e"/><rect x="2" y="3" width="1" height="1" fill="#e8574a"/><rect x="3" y="3" width="1" height="1" fill="#ffffff"/><rect x="4" y="3" width="1" height="1" fill="#ffffff"/><rect x="5" y="3" width="1" height="1" fill="#e8574a"/><rect x="6" y="3" width="1" height="1" fill="#e8574a"/><rect x="7" y="3" width="1" height="1" fill="#e8574a"/><rect x="8" y="3" width="1" height="1" fill="#e8574a"/><rect x="9" y="3" width="1" height="1" fill="#e8574a"/><rect x="10" y="3" width="1" height="1" fill="#e8574a"/><rect x="11" y="3" width="1" height="1" fill="#e8574a"/><rect x="12" y="3" width="1" height="1" fill="#1e1e1e"/><rect x="0" y="4" width="1" height="1" fill="#1e1e1e"/><rect x="1" y="4" width="1" height="1" fill="#e8574a"/><rect x="2" y="4" width="1" height="1" fill="#e8574a"/><rect x="3" y="4" width="1" height="1" fill="#e8574a"/><rect x="4" y="4" width="1" height="1" fill="#e8574a"/><rect x="5" y="4" width="1" height="1" fill="#e8574a"/><rect x="6" y="4" width="1" height="1" fill="#e8574a"/><rect x="7" y="4" width="1" height="1" fill="#e8574a"/><rect x="8" y="4" width="1" height="1" fill="#e8574a"/><rect x="9" y="4" width="1" height="1" fill="#e8574a"/><rect x="10" y="4" width="1" height="1" fill="#e8574a"/><rect x="11" y="4" width="1" height="1" fill="#e8574a"/><rect x="12" y="4" width="1" height="1" fill="#e8574a"/><rect x="13" y="4" width="1" height="1" fill="#1e1e1e"/><rect x="0" y="5" width="1" height="1" fill="#1e1e1e"/><rect x="1" y="5" width="1" height="1" fill="#e8574a"/><rect x="2" y="5" width="1" height="1" fill="#e8574a"/><rect x="3" y="5" width="1" height="1" fill="#e8574a"/><rect x="4" y="5" width="1" height="1" fill="#e8574a"/><rect x="5" y="5" width="1" height="1" fill="#e8574a"/><rect x="6" y="5" width="1" height="1" fill="#e8574a"/><rect x="7" y="5" width="1" height="1" fill="#e8574a"/><rect x="8" y="5" width="1" height="1" fill="#e8574a"/><rect x="9" y="5" width="1" height="1" fill="#e8574a"/><rect x="10" y="5" width="1" height="1" fill="#e8574a"/><rect x="11" y="5" width="1" height="1" fill="#e8574a"/><rect x="12" y="5" width="1" height="1" fill="#e8574a"/><rect x="13" y="5" width="1" height="1" fill="#1e1e1e"/><rect x="0" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="1" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="2" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="3" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="4" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="5" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="6" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="7" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="8" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="9" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="10" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="11" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="12" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="13" y="6" width="1" height="1" fill="#1e1e1e"/><rect x="0" y="7" width="1" height="1" fill="#1e1e1e"/><rect x="1" y="7" width="1" height="1" fill="#ffffff"/><rect x="2" y="7" width="1" height="1" fill="#ffffff"/><rect x="3" y="7" width="1" height="1" fill="#ffffff"/><rect x="4" y="7" width="1" height="1" fill="#ffffff"/><rect x="5" y="7" width="1" height="1" fill="#ffffff"/><rect x="6" y="7" width="1" height="1" fill="#ffffff"/><rect x="7" y="7" width="1" height="1" fill="#ffffff"/><rect x="8" y="7" width="1" height="1" fill="#ffffff"/><rect x="9" y="7" width="1" height="1" fill="#ffffff"/><rect x="10" y="7" width="1" height="1" fill="#ffffff"/><rect x="11" y="7" width="1" height="1" fill="#ffffff"/><rect x="12" y="7" width="1" height="1" fill="#c6c6c6"/><rect x="13" y="7" width="1" height="1" fill="#1e1e1e"/><rect x="0" y="8" width="1" height="1" fill="#1e1e1e"/><rect x="1" y="8" width="1" height="1" fill="#ffffff"/><rect x="2" y="8" width="1" height="1" fill="#ffffff"/><rect x="3" y="8" width="1" height="1" fill="#ffffff"/><rect x="4" y="8" width="1" height="1" fill="#ffffff"/><rect x="5" y="8" width="1" height="1" fill="#ffffff"/><rect x="6" y="8" width="1" height="1" fill="#ffffff"/><rect x="7" y="8" width="1" height="1" fill="#ffffff"/><rect x="8" y="8" width="1" height="1" fill="#ffffff"/><rect x="9" y="8" width="1" height="1" fill="#ffffff"/><rect x="10" y="8" width="1" height="1" fill="#ffffff"/><rect x="11" y="8" width="1" height="1" fill="#ffffff"/><rect x="12" y="8" width="1" height="1" fill="#c6c6c6"/><rect x="13" y="8" width="1" height="1" fill="#1e1e1e"/><rect x="1" y="9" width="1" height="1" fill="#1e1e1e"/><rect x="2" y="9" width="1" height="1" fill="#ffffff"/><rect x="3" y="9" width="1" height="1" fill="#ffffff"/><rect x="4" y="9" width="1" height="1" fill="#ffffff"/><rect x="5" y="9" width="1" height="1" fill="#ffffff"/><rect x="6" y="9" width="1" height="1" fill="#ffffff"/><rect x="7" y="9" width="1" height="1" fill="#ffffff"/><rect x="8" y="9" width="1" height="1" fill="#ffffff"/><rect x="9" y="9" width="1" height="1" fill="#ffffff"/><rect x="10" y="9" width="1" height="1" fill="#ffffff"/><rect x="11" y="9" width="1" height="1" fill="#c6c6c6"/><rect x="12" y="9" width="1" height="1" fill="#1e1e1e"/><rect x="1" y="10" width="1" height="1" fill="#1e1e1e"/><rect x="2" y="10" width="1" height="1" fill="#ffffff"/><rect x="3" y="10" width="1" height="1" fill="#ffffff"/><rect x="4" y="10" width="1" height="1" fill="#ffffff"/><rect x="5" y="10" width="1" height="1" fill="#ffffff"/><rect x="6" y="10" width="1" height="1" fill="#ffffff"/><rect x="7" y="10" width="1" height="1" fill="#ffffff"/><rect x="8" y="10" width="1" height="1" fill="#ffffff"/><rect x="9" y="10" width="1" height="1" fill="#ffffff"/><rect x="10" y="10" width="1" height="1" fill="#c6c6c6"/><rect x="11" y="10" width="1" height="1" fill="#c6c6c6"/><rect x="12" y="10" width="1" height="1" fill="#1e1e1e"/><rect x="2" y="11" width="1" height="1" fill="#1e1e1e"/><rect x="3" y="11" width="1" height="1" fill="#1e1e1e"/><rect x="4" y="11" width="1" height="1" fill="#c6c6c6"/><rect x="5" y="11" width="1" height="1" fill="#c6c6c6"/><rect x="6" y="11" width="1" height="1" fill="#c6c6c6"/><rect x="7" y="11" width="1" height="1" fill="#c6c6c6"/><rect x="8" y="11" width="1" height="1" fill="#c6c6c6"/><rect x="9" y="11" width="1" height="1" fill="#c6c6c6"/><rect x="10" y="11" width="1" height="1" fill="#1e1e1e"/><rect x="11" y="11" width="1" height="1" fill="#1e1e1e"/><rect x="4" y="12" width="1" height="1" fill="#1e1e1e"/><rect x="5" y="12" width="1" height="1" fill="#1e1e1e"/><rect x="6" y="12" width="1" height="1" fill="#1e1e1e"/><rect x="7" y="12" width="1" height="1" fill="#1e1e1e"/><rect x="8" y="12" width="1" height="1" fill="#1e1e1e"/><rect x="9" y="12" width="1" height="1" fill="#1e1e1e"/></svg>';
+function sxShow(e){if($('#sxov'))return;var n=$('#nudge');if(n)n.remove();var gc=e.kind==='g',ch=gc?RW_GCHEER:SX_CHEER;
+  var o=overlay('sxov',(gc?'<div style="line-height:1">'+RW_PXCAP+'</div>':'<div style="font-size:80px;line-height:1.1">🏐</div>')+'<div style="font-size:30px;color:#c2410c;margin:8px 0">🎊 發現神秘彩蛋！🎊</div>'+
+  '<div style="font-size:30px;line-height:1.5;margin:10px 0">'+(gc?RW_GMSG:sxMsg(e))+'</div><div style="font-size:22px;color:#c2410c;margin-bottom:16px">「'+esc(ch[rnd(ch.length)])+'」'+(gc?'✨':'🔥')+'</div>'+
+  '<button class="btn" style="display:inline-block;width:auto;font-size:30px;padding:16px 40px" data-a="sxtake">🙌 收下</button>');o.setAttribute('data-k',gc?'g':'m');
   try{sndWin();setTimeout(function(){confetti(180)},900)}catch(x){}}
 
 /* ---------- 練習紀錄與家長設定 ---------- */
