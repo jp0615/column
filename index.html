@@ -678,13 +678,40 @@ function stats(toSet){var h=topbar(true)+'<h2>📊 練習紀錄（給爸媽看�
   '<label class="set"><input type="checkbox" id="s_sound"'+(D.sound!==false?' checked':'')+'>🎵 音效和聲音</label>'+
   '<label class="set"><input type="checkbox" id="s_voice"'+(D.voice!==false?' checked':'')+'>👨 爸爸的聲音（答對稱讚、答錯鼓勵）</label>'+
   '<label class="set"><input type="checkbox" id="s_guide"'+(D.guideAll?' checked':'')+'>🧭 每一關都一步一步帶著做（預設只有第 2、4 關會帶著做進位／退位）</label>'+
-  '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn small blue" data-a="testvoice">🔊 試聽</button><button class="btn small purple" data-a="export">📋 匯出紀錄代碼</button><button class="btn small wood" data-a="import">📥 匯入</button><button class="btn small red" data-a="reset">清除所有紀錄與方塊</button></div>'+
-  '<textarea id="code" placeholder="匯出的代碼會出現在這裡；要匯入就把代碼貼在這裡再按「匯入」"></textarea>'+
+  '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn small blue" data-a="testvoice">🔊 試聽</button><button class="btn small purple" data-a="export">📋 匯出紀錄代碼</button><button class="btn small wood" data-a="import" data-m="merge">📥 合併匯入</button><button class="btn small wood" data-a="import" data-m="replace">取代全部資料</button><button class="btn small red" data-a="reset">清除所有紀錄與方塊</button></div>'+
+  '<textarea id="code" placeholder="匯出的代碼會出現在這裡；要匯入就把代碼貼在這裡再按「合併匯入」（保留兩邊比較多的紀錄）"></textarea>'+
   '<div style="font-size:15px;color:#444;margin-top:10px;line-height:1.5">字型：俐方體11號（Cubic 11）子集，SIL Open Font License 1.1（fonts/OFL.txt）。圖案與音效都是本 App 自己畫、自己做的。</div></div>';
   app.innerHTML=h;if(toSet===true){var el=$('#settings');if(el)setTimeout(function(){el.scrollIntoView({block:'start'})},50)}}
-function doImport(txt){var o;try{o=JSON.parse(String(txt).trim())}catch(e){toast('代碼格式不正確');return}if(o&&o.app==='column'&&o.data)o=o.data;
-  if(!o||typeof o.lv!=='object'||typeof o.sk!=='object'){toast('這不是直式加減的紀錄');return}
-  if(!confirm('用匯入的紀錄取代目前的紀錄嗎？'))return;var b=blank();for(var k in b)b[k]=o[k]!==undefined?o[k]:b[k];if(o.v===undefined)b.v=1;D=b;UNDO=[];migrate();save();toast('匯入成功！');go('home')}
+/* 匯出：學習資料全部帶走（經驗值、方塊、背包、我的世界、關卡與題型紀錄、解鎖、歷程）；不含系統同步狀態 */
+function exportText(){return JSON.stringify({app:'column',fmt:2,exported:new Date().toISOString(),data:D})}
+function cPick(a,b,n){if(!a)return b;if(!b)return a;var na=n(a),nb=n(b);if(nb!==na)return nb>na?b:a;return String(b.h||'').length>String(a.h||'').length?b:a}
+function cHist(h){return (Array.isArray(h)?h:[]).filter(function(x){return x&&typeof x==='object'&&+x.t})}
+function wPlaced(w){var n=0;w=String(w||'');for(var i=0;i<w.length;i++)if(w[i]!=='.')n++;return n}
+function invSum(v){var t=0;for(var k in (v||{}))t+=v[k]|0;return t}
+function doImport(txt,mode){var o;try{o=JSON.parse(String(txt).trim())}catch(e){toast('代碼格式不正確');return}if(o&&o.app==='column'&&o.data)o=o.data;
+  if(!o||typeof o.lv!=='object'||typeof o.sk!=='object'||!o.lv||!o.sk){toast('這不是直式加減的紀錄');return}
+  if(mode==='replace'){
+    if(!confirm('用匯入的紀錄取代目前的紀錄嗎？'))return;var b=blank();for(var k in b)b[k]=o[k]!==undefined?o[k]:b[k];if(o.v===undefined)b.v=1;D=b;
+  }else{
+    /* 先把匯入的資料整理成新版格式（舊版代碼的方塊會換成背包），再合併 */
+    var cur=D,ib=blank();for(var k2 in ib)ib[k2]=o[k2]!==undefined?o[k2]:ib[k2];if(o.v===undefined)ib.v=1;D=ib;migrate();var inc=D;D=cur;
+    var lvN=function(s){return +s.n||0},skN=function(s){return (+s.c||0)+(+s.w||0)};
+    Object.keys(inc.lv||{}).forEach(function(k){D.lv[k]=cPick(D.lv[k],inc.lv[k],lvN)});
+    Object.keys(inc.sk||{}).forEach(function(k){D.sk[k]=cPick(D.sk[k],inc.sk[k],skN)});
+    var seen={},all=cHist(D.hist).concat(cHist(inc.hist)).filter(function(x){var id=x.t+'|'+x.k;if(seen[id])return false;seen[id]=1;return true});
+    all.sort(function(x,y){return x.t-y.t});D.hist=all.slice(-60);
+    /* 方塊世界不能拼在一起：用賺到方塊比較多的那一邊（世界＋背包＋藍圖） */
+    var ia=(+inc.blocks||0),ca=(+D.blocks||0);
+    if(ia>ca||(ia===ca&&wPlaced(inc.world)+invSum(inc.inv)>wPlaced(D.world)+invSum(D.inv))){D.world=inc.world;D.inv=inc.inv;D.bp=inc.bp}
+    D.blocks=Math.max(ca,ia);D.xp=Math.max(+D.xp||0,+inc.xp||0);
+    Object.keys(inc.unl||{}).forEach(function(k){D.unl[k]=D.unl[k]?Math.min(D.unl[k],inc.unl[k]):inc.unl[k]});
+    Object.keys(inc.bpDone||{}).forEach(function(k){D.bpDone[k]=D.bpDone[k]?Math.min(D.bpDone[k],inc.bpDone[k]):inc.bpDone[k]});
+    if(inc.nudge&&typeof inc.nudge==='object'&&(+inc.nudge.t||0)>(+(D.nudge||{}).t||0))D.nudge=inc.nudge;
+    D.migNote=true;
+  }
+  UNDO=[];migrate();save();go('home');
+  overlay('impov','<div style="font-size:30px;color:#2d6a1f;margin-bottom:8px">✅ '+(mode==='replace'?'已取代成匯入的紀錄':'合併匯入完成')+'</div><div style="font-size:24px;line-height:1.6">Lv.'+xpLevel(D.xp).lv+'（經驗值 '+D.xp+'）<br>🎒 背包 '+invTotal()+' 塊、我的世界 '+wPlaced(D.world)+' 塊<br>練習紀錄 '+D.hist.length+' 輪</div><button class="btn" style="margin-top:14px" data-a="ovclose" data-o="impov">👍 好</button>');
+  toast('已匯入：經驗值 '+D.xp+'、背包 '+invTotal()+' 塊')}
 
 /* ---------- 事件 ---------- */
 document.addEventListener('click',function(e){var el=e.target.closest('[data-a]');if(!el)return;var a=el.dataset.a;ac();
@@ -713,8 +740,8 @@ document.addEventListener('click',function(e){var el=e.target.closest('[data-a]'
     case 'sxtake':sxTake();break;
     case 'nudgeclose':{var c=$('#nudge');if(c)c.remove();break}
     case 'testvoice':say('ok3');break;
-    case 'export':{var t=JSON.stringify({app:'column',exported:new Date().toISOString(),data:D}),ta=$('#code');ta.value=t;ta.focus();ta.select();var ok=false;try{ok=document.execCommand('copy')}catch(x){}toast(ok?'已複製！到另一台 iPad 貼上就可以匯入':'請長按文字全選後拷貝');break}
-    case 'import':{var v=$('#code').value;if(!v.trim()){toast('請先把代碼貼到框框裡');break}doImport(v);break}
+    case 'export':{var t=exportText(),ta=$('#code');ta.value=t;ta.focus();ta.select();try{ta.setSelectionRange(0,t.length)}catch(x){}var ok=false;try{ok=document.execCommand('copy')}catch(x){}if(!ok&&navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast('已複製')},function(){});toast(ok?'已複製！到另一台 iPad 貼上就可以匯入':'請長按文字全選後拷貝');break}
+    case 'import':{var v=$('#code').value;if(!v.trim()){toast('請先把代碼貼到框框裡');break}doImport(v,el.dataset.m||'merge');break}
     case 'reset':if(confirm('確定清除所有紀錄、經驗值、背包和我的世界？')){var keep={sound:D.sound,voice:D.voice,guideAll:D.guideAll};D=blank();for(var k in keep)D[k]=keep[k];UNDO=[];migrate();save();stats()}break;
   }});
 document.addEventListener('change',function(e){var id=e.target.id,v=e.target.checked;
