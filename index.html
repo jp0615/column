@@ -158,6 +158,7 @@ textarea{width:100%;font-size:16px;padding:10px;border:3px solid #1e1e1e;min-hei
 .ov .panel{max-width:600px;width:100%;text-align:center}
 #toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:#1e1e1e;color:#fff;padding:14px 24px;font-size:22px;z-index:90;display:none;max-width:90%;text-align:center;box-shadow:0 0 0 3px #fff}
 #fx{position:fixed;inset:0;pointer-events:none;z-index:60}
+.btn.hubb{background:#d9669e;text-decoration:none;font-size:18px;padding:8px 12px}
 </style>
 </head>
 <body>
@@ -425,7 +426,8 @@ var PRAISE=['挖到寶了！💎','漂亮！⛏️','完美！💯','你是算�
 var app=$('#app'),view='home',G=null;
 function xpHtml(){var x=xpLevel(D.xp);return '<div class="xp"><b>Lv.'+x.lv+'</b><div class="xpbar"><i style="width:calc('+(x.cur/x.need*100)+'% - 4px)"></i></div><b style="color:#fff">🎒 '+invTotal()+'</b></div>'}
 function sndBtn(){return '<button class="btn small stone" data-a="sound">'+(D.sound!==false?'🔊':'🔇')+'</button>'}
-function topbar(back){return '<div class="top">'+(back?'<button class="btn small stone" data-a="home">🏠 回首頁</button>':sndBtn())+xpHtml()+'</div>'}
+function hubBtn(){try{if(localStorage.getItem('hub.on'))return '<a class="btn small hubb" href="/" aria-label="回到遊樂園選遊戲">🎡 選遊戲</a>'}catch(e){}return ''}
+function topbar(back){return '<div class="top">'+(back?'<button class="btn small stone" data-a="home">🏠 回首頁</button>':(hubBtn()?'<span style="display:flex;gap:12px">'+sndBtn()+hubBtn()+'</span>':sndBtn()))+xpHtml()+'</div>'}
 function go(v){view=v;render()}
 function render(){if(view==='home')home();else if(view==='menu')menu();else if(view==='quiz')drawQ();else if(view==='result')result();else if(view==='house'||view==='build')buildView();else if(view==='stats')stats();window.scrollTo(0,0)}
 function greet(){var h=new Date().getHours(),acc=D.hist.length;return acc?['今天也來挖幾題直式吧！','從個位開始，一格一格算，就不會錯喔！','答對就有方塊放進背包，你自己來蓋房子！','進位、退位，我們一起搞定！'][rnd(4)]:'嗨！我是阿方！答對直式賺方塊，蓋出你自己的世界！'}
