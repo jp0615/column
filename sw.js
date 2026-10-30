@@ -1,5 +1,5 @@
 /* 直式加減小達人 — 離線快取。更新 App 時請把版本號加一。 */
-var CACHE='column-v6';
+var CACHE='column-v7';
 var FILES=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./fonts/pixel.woff2',
   './voice/silence.mp3','./voice/dad/ok1.mp3','./voice/dad/ok2.mp3','./voice/dad/ok3.mp3','./voice/dad/try1.mp3','./voice/dad/try2.mp3'];
 self.addEventListener('install',function(e){e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(FILES)}).then(function(){return self.skipWaiting()}))});
