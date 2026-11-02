@@ -984,17 +984,17 @@ function stats(toSet){var h=topbar(true)+'<h2>📊 練習紀錄（給爸媽看�
   '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn small blue" data-a="testvoice">🔊 試聽</button><button class="btn small purple" data-a="export">📋 匯出紀錄代碼</button><button class="btn small wood" data-a="import" data-m="merge">📥 合併匯入</button><button class="btn small wood" data-a="import" data-m="replace">取代全部資料</button><button class="btn small red" data-a="reset">清除所有紀錄與方塊</button></div>'+
   '<textarea id="code" placeholder="匯出的代碼會出現在這裡；要匯入就把代碼貼在這裡再按「合併匯入」（保留兩邊比較多的紀錄；裂開的方塊和星星小舖買的東西兩邊合在一起）"></textarea>'+
   '<div style="font-size:15px;color:#444;margin-top:10px;line-height:1.5">字型：俐方體11號（Cubic 11）子集，SIL Open Font License 1.1（fonts/OFL.txt）。圖案與音效都是本 App 自己畫、自己做的。</div></div>';
-  app.innerHTML=h;if(toSet===true){var el=$('#settings');if(el)setTimeout(function(){el.scrollIntoView({block:'start'})},50)}}
+  h+=BX.ui();app.innerHTML=h;if(toSet===true){var el=$('#settings');if(el)setTimeout(function(){el.scrollIntoView({block:'start'})},50)}}
 /* 匯出：學習資料全部帶走（經驗值、方塊、背包、我的世界、⭐ 星星與星星小舖、關卡與題型紀錄、解鎖、歷程）；不含系統同步狀態 */
 function exportText(){return JSON.stringify({app:'column',fmt:2,exported:new Date().toISOString(),data:D})}
 function cPick(a,b,n){if(!a)return b;if(!b)return a;var na=n(a),nb=n(b);if(nb!==na)return nb>na?b:a;return String(b.h||'').length>String(a.h||'').length?b:a}
 function cHist(h){return (Array.isArray(h)?h:[]).filter(function(x){return x&&typeof x==='object'&&+x.t})}
 function wPlaced(w){var n=0;w=String(w||'');for(var i=0;i<w.length;i++)if(w[i]!=='.')n++;return n}
 function invSum(v){var t=0;for(var k in (v||{}))t+=v[k]|0;return t}
-function doImport(txt,mode){var o;try{o=JSON.parse(String(txt).trim())}catch(e){toast('代碼格式不正確');return}if(o&&o.app==='column'&&o.data)o=o.data;
+function doImport(txt,mode,q){var o;try{o=JSON.parse(String(txt).trim())}catch(e){toast('代碼格式不正確');return}if(o&&o.app==='column'&&o.data)o=o.data;
   if(!o||typeof o.lv!=='object'||typeof o.sk!=='object'||!o.lv||!o.sk){toast('這不是直式計算的紀錄');return}
   if(mode==='replace'){
-    if(!confirm('用匯入的紀錄取代目前的紀錄嗎？'))return;var b=blank();for(var k in b)b[k]=o[k]!==undefined?o[k]:b[k];if(o.v===undefined)b.v=1;D=b;
+    if(!q&&!confirm('用匯入的紀錄取代目前的紀錄嗎？'))return;if(!q)try{BX.reset()}catch(e){}var b=blank();for(var k in b)b[k]=o[k]!==undefined?o[k]:b[k];if(o.v===undefined)b.v=1;D=b;
   }else{
     /* 先把匯入的資料整理成新版格式（舊版代碼的方塊會換成背包），再合併 */
     var cur=D,ib=blank();for(var k2 in ib)ib[k2]=o[k2]!==undefined?o[k2]:ib[k2];if(o.v===undefined)ib.v=1;D=ib;migrate();var inc=D;D=cur;
@@ -1013,7 +1013,7 @@ function doImport(txt,mode){var o;try{o=JSON.parse(String(txt).trim())}catch(e){
     D.fx=fkMerge(D.fx,inc.fx);
     D.migNote=true;
   }
-  UNDO=[];SHASK=null;migrate();D.fx=fkClean(D.fx);cfL();save();go('home');
+  UNDO=[];SHASK=null;migrate();D.fx=fkClean(D.fx);cfL();save();if(q)return true;go('home');
   overlay('impov','<div style="font-size:30px;color:#2d6a1f;margin-bottom:8px">✅ '+(mode==='replace'?'已取代成匯入的紀錄':'合併匯入完成')+'</div><div style="font-size:24px;line-height:1.6">Lv.'+xpLevel(D.xp).lv+'（經驗值 '+D.xp+'）<br>🎒 背包 '+invTotal()+' 塊、我的世界 '+wPlaced(D.world)+' 塊<br>⭐ 總共拿過 '+(D.stars|0)+' 顆、星星小舖買了 '+shNOwn()+' 樣<br>練習紀錄 '+D.hist.length+' 輪'+(Object.keys(D.fx||{}).length?'<br>🧱 裂開的方塊 '+Object.keys(D.fx).length+' 塊':'')+'</div><button class="btn" style="margin-top:14px" data-a="ovclose" data-o="impov">👍 好</button>');
   toast('已匯入：經驗值 '+D.xp+'、背包 '+invTotal()+' 塊')}
 
@@ -1048,7 +1048,7 @@ document.addEventListener('click',function(e){var el=e.target.closest('[data-a]'
     case 'export':{var t=exportText(),ta=$('#code');ta.value=t;ta.focus();ta.select();try{ta.setSelectionRange(0,t.length)}catch(x){}var ok=false;try{ok=document.execCommand('copy')}catch(x){}if(!ok&&navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast('已複製')},function(){});toast(ok?'已複製！到另一台 iPad 貼上就可以匯入':'請長按文字全選後拷貝');break}
     case 'import':{var v=$('#code').value;if(!v.trim()){toast('請先把代碼貼到框框裡');break}doImport(v,el.dataset.m||'merge');break}
     case 'shop':case 'shbuy':case 'shgo':shAct(a,el);break;
-    case 'reset':if(confirm('確定清除所有紀錄、經驗值、背包、我的世界、⭐ 星星和星星小舖買的東西？')){var keep={sound:D.sound,voice:D.voice,guideAll:D.guideAll};D=blank();for(var k in keep)D[k]=keep[k];UNDO=[];migrate();save();stats()}break;
+    case 'reset':if(confirm('確定清除所有紀錄、經驗值、背包、我的世界、⭐ 星星和星星小舖買的東西？')){var keep={sound:D.sound,voice:D.voice,guideAll:D.guideAll};D=blank();for(var k in keep)D[k]=keep[k];UNDO=[];migrate();save();BX.reset();stats()}break;
   }});
 document.addEventListener('change',function(e){var id=e.target.id,v=e.target.checked;
   if(id==='s_sound'){D.sound=v;save();if(v)sndOk()}else if(id==='s_voice'){D.voice=v;save();if(v)say('ok2')}else if(id==='s_guide'){D.guideAll=v;save();toast(v?'每一關都會一步一步帶著做':'只有第 2、4、10 關會一步一步帶著做')}});
@@ -1059,6 +1059,123 @@ window.__col={fix:{info:cfInfo,plan:cfPlan,day:fkDay,start:startFix,L:cfL,exp:ex
 buildTextures();load();sxSync();
 (document.fonts&&document.fonts.load?document.fonts.load('40px PixelTC','直式0').catch(function(){}):Promise.resolve()).then(function(){render()});
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+/* ---------- 雲端同步：同一個家庭連結的裝置互相合併進度（家長設定裡設定；本機資料一直保留） ---------- */
+var BX=(function(){
+  var P='brie-yuleyuan-a9c67d',K='AIzaSyC_SGM8zRL3s8ALY2PUCBG7yEceXsvrID0',
+    FS='https://firestore.googleapis.com/v1/projects/'+P+'/databases/(default)/documents/families/',
+    ORG='https://jp0615.github.io/',A=null,busy=0,lastRun=0,again=0,st='';
+  function g(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function s(k,v){try{if(v===null||v===undefined)localStorage.removeItem(k);else localStorage.setItem(k,String(v))}catch(e){}}
+  function J(k){try{var o=JSON.parse(g(k));return (o&&typeof o==='object')?o:null}catch(e){return null}}
+  function hs(t){t=String(t);var h=5381,i;for(i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return t.length+':'+(h>>>0).toString(36)}
+  function okF(f){return typeof f==='string'&&/^[A-Za-z0-9_-]{32,64}$/.test(f)}
+  function fid(){var f=g('bx.f');return okF(f)?f:null}
+  function pf(t){t=String(t||'').trim();var m=t.match(/[?&#]family=([A-Za-z0-9_-]{32,64})/);if(m)return m[1];return okF(t)?t:null}
+  function setF(f){if(!okF(f)||g('bx.f')===f)return false;
+    try{var ks=[],i;for(i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/^bx\.(e|h|c|m|rp|sh|ok|lh)(\.|$)/.test(k))ks.push(k)}ks.forEach(function(k){localStorage.removeItem(k)})}catch(e){}
+    s('bx.f',f);return true}
+  function link(){var f=fid();return f?ORG+'?family='+f:''}
+  /* 匿名登入（每台裝置一次），token 過期自動換新 */
+  function su(){return fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+K,{method:'POST',headers:{'Content-Type':'application/json'},body:'{"returnSecureToken":true}'})
+    .then(function(r){return r.json()}).then(function(j){return {i:j.idToken,r:j.refreshToken,x:Date.now()+(+j.expiresIn||3600)*1e3}})}
+  function tok(){var t=J('bx.a'),now=Date.now(),p;
+    if(t&&t.i&&+t.x>now+12e4)return Promise.resolve(t.i);
+    if(t&&t.r)p=fetch('https://securetoken.googleapis.com/v1/token?key='+K,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(t.r)})
+      .then(function(r){if(r.status>=400&&r.status<500)return su();if(!r.ok)throw 0;return r.json().then(function(j){return {i:j.id_token,r:j.refresh_token,x:now+(+j.expires_in||3600)*1e3}})});
+    else p=su();
+    return p.then(function(n){if(!n||!n.i)throw 0;s('bx.a',JSON.stringify(n));return n.i})}
+  function get(f,t){return fetch(FS+f,{headers:{Authorization:'Bearer '+t},cache:'no-store'}).then(function(r){
+    if(r.status===404)return {ut:null,d:{}};if(!r.ok)throw r.status;
+    return r.json().then(function(j){var d=null;try{d=JSON.parse(j.fields.d.stringValue)}catch(e){}return {ut:j.updateTime,d:(d&&typeof d==='object')?d:{}}})})}
+  function put(f,t,ut,d,ka){var b=JSON.stringify({fields:{v:{integerValue:'1'},u:{integerValue:String(Date.now())},d:{stringValue:JSON.stringify(d)}}});
+    return fetch(FS+f+'?'+(ut?'currentDocument.updateTime='+encodeURIComponent(ut):'currentDocument.exists=false'),
+      {method:'PATCH',keepalive:!!ka&&b.length<6e4,headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:b})
+      .then(function(r){if(r.ok)return true;if(r.status===400||r.status===409||r.status===412)return false;throw r.status})}
+  /* 其他本機設定：兩邊合併 */
+  function hu(a,b){var m={},o=[];[a,b].forEach(function(x){(Array.isArray(x&&x.h)?x.h:[]).concat(x&&+x.t?[{t:+x.t,k:x.k,g:x.g,gg:x.gg}]:[]).forEach(function(y){if(y&&+y.t&&!m[+y.t]){m[+y.t]=1;o.push(y)}})});
+    o.sort(function(x,y){return x.t-y.t});return o.slice(-6)}
+  function cl(o){return JSON.parse(JSON.stringify(o))}
+  function sm(a,b,lt){if(!b||typeof b!=='object')return a;if(!a||typeof a!=='object')return cl(b);
+    var at=+a.t||0,bt=+b.t||0;if(a.tok!==undefined&&b.tok!==undefined&&String(a.tok)!==String(b.tok)){var ct=ctk();
+      if(ct!==null&&String(b.tok)===ct)return cl(b);if(ct!==null&&String(a.tok)===ct)return a;return bt>at?cl(b):a}
+    var n=bt>at?cl(b):cl(a),o=bt>at?a:b,k;for(k in o)if(n[k]===undefined)n[k]=o[k];
+    if(n.tok===undefined&&o.tok!==undefined)n.tok=o.tok;
+    var h=hu(a,b);if(lt){n.h=h;return n}
+    if(a.h||b.h)n.h=h;
+    var ah=(a.h||[]).map(function(x){return +x.t}),bh=(b.h||[]).map(function(x){return +x.t}),an=+a.n||0,bn=+b.n||0,big=bn>an?bh:ah;
+    n.n=Math.max(an,bn)+h.filter(function(x){return big.indexOf(+x.t)<0}).length;
+    n.c=bt===at?Math.max(+a.c||0,+b.c||0):(bt>at?+b.c||0:+a.c||0);
+    if(a.v!==undefined||b.v!==undefined)n.v=Math.max(+a.v||0,+b.v||0);
+    if(a.fin||b.fin)n.fin=true;
+    ['r','q'].forEach(function(w){var x=String(a[w]||''),y=String(b[w]||'');if(a[w]!==undefined||b[w]!==undefined)n[w]=y.length>x.length?y:x});
+    return n}
+  function ctk(){var c=J(A.ck);return c&&c.resetToken!==undefined?String(c.resetToken):null}
+  function core(o){if(!o)return '';var c={},k;for(k in o)if(k!=='r'&&k!=='q')c[k]=o[k];return JSON.stringify(c)}
+  function cj(o){if(Array.isArray(o))return '['+o.map(cj).join(',')+']';if(o&&typeof o==='object'){return '{'+Object.keys(o).sort().filter(function(k){return o[k]!==undefined}).map(function(k){return JSON.stringify(k)+':'+cj(o[k])}).join(',')+'}'}return JSON.stringify(o)}
+  function nx(){var o=JSON.parse(A.ex());delete o.exported;return cj(o)}
+  function eid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+  function idle(){try{return A.idle()&&!document.querySelector('#spov,#sxov,#impov')}catch(e){return false}}
+  function typing(){var e=document.activeElement;return e&&/^(INPUT|TEXTAREA|SELECT)$/.test(e.tagName)}
+  function lsys(){return {a:J(A.sk),l:J('sys.lt')}}
+  function show(){var e=document.getElementById('bxst');if(e)e.textContent=stat()}
+  function stat(){if(!fid())return '☁️ 雲端同步：尚未設定';var ok=+g('bx.ok.'+A.a)||0;
+    if(st==='run')return '☁️ 同步中…';
+    if(!ok)return '☁️ 尚未同步'+(navigator.onLine===false?'（目前離線，連上網路後會自動同步）':'');
+    var d=new Date(ok),p=function(x){return (x<10?'0':'')+x},t=p(d.getHours())+':'+p(d.getMinutes()),td=new Date().toDateString()===d.toDateString();
+    return '☁️ 已同步 '+(td?'':(d.getMonth()+1)+'/'+d.getDate()+' ')+t+(st==='err'||navigator.onLine===false?'（目前連不上，進度先存在這台，之後會自動補上）':'')}
+  function dirty(){var x;try{x=nx()}catch(e){return false}var y=lsys(),hx=hs(x);
+    if(hx!==g('bx.lh.'+A.a)){if(g('bx.h.'+A.a))s('bx.m.'+A.a,Date.now());s('bx.lh.'+A.a,hx)}
+    if(hx!==g('bx.h.'+A.a))return true;
+    return hs(JSON.stringify(y.a)+JSON.stringify(y.l))!==g('bx.sh.'+A.a)}
+  function run(hide){var f=fid();if(!A||!f||!window.fetch||busy)return Promise.resolve(false);
+    if(navigator.onLine===false){show();return Promise.resolve(false)}
+    busy=1;lastRun=Date.now();st='run';if(!hide)show();var a=A.a,tries=0,re=false;
+    function step(t){return get(f,t).then(function(cd){
+      var d=cd.d,cp=(d[a]&&typeof d[a]==='object'&&typeof d[a].x==='string')?d[a]:null,le=g('bx.e.'+a),rp=g('bx.rp.'+a),
+        cs=(d.s&&typeof d.s==='object')?d.s:{},fresh=!g('bx.h.'+a);
+      if(dirty()&&fresh)s('bx.m.'+a,0);
+      var lm=+g('bx.m.'+a)||0,e=le,m=lm,seen=cp&&(hs(cp.x)===g('bx.c.'+a)||hs(cp.x)===hs(nx()));
+      if(cp&&!rp&&!seen){
+        if(!idle()||hide)return 'later';
+        if(le&&cp.e&&cp.e!==le){A.im(cp.x,'replace');e=cp.e;m=+cp.m||0}
+        else{if((+cp.m||0)>lm){var L=A.ex();A.im(cp.x,'replace');A.im(L,'merge')}else A.im(cp.x,'merge');e=cp.e||le;m=Math.max(lm,+cp.m||0)}
+        re=true}
+      else if(cp&&!rp&&(!le||cp.e===le)){e=cp.e||le;m=Math.max(lm,+cp.m||0)}
+      if(!e){e=eid()}
+      var y=lsys(),na=sm(y.a,cs[a]),nl=sm(y.l,cs.lt,1);
+      if(na&&JSON.stringify(na)!==JSON.stringify(y.a))s(A.sk,JSON.stringify(na));
+      if(nl&&JSON.stringify(nl)!==JSON.stringify(y.l))s('sys.lt',JSON.stringify(nl));
+      var x=nx(),hx=hs(x),need=!cp||rp||hs(cp.x)!==hx||cp.e!==e||(+cp.m||0)!==m||core(na)!==core(cs[a])||JSON.stringify(nl)!==JSON.stringify(cs.lt||null)||
+        (na&&cs[a]&&(String(na.r||'')!==String(cs[a].r||'')||String(na.q||'')!==String(cs[a].q||''))&&hs(JSON.stringify(y.a)+JSON.stringify(y.l))!==g('bx.sh.'+a));
+      function done(){s('bx.e.'+a,e);s('bx.m.'+a,m);s('bx.h.'+a,hx);s('bx.c.'+a,hx);s('bx.lh.'+a,hx);s('bx.rp.'+a,null);var z=lsys();s('bx.sh.'+a,hs(JSON.stringify(z.a)+JSON.stringify(z.l)));s('bx.ok.'+a,Date.now());return 'ok'}
+      if(!need)return done();
+      var nd={},k;for(k in d)nd[k]=d[k];nd[a]={e:e,m:m,x:x};var ns={};for(k in cs)ns[k]=cs[k];if(na)ns[a]=na;if(nl)ns.lt=nl;nd.s=ns;
+      return put(f,t,cd.ut,nd,hide).then(function(ok){if(ok)return done();if(++tries>=3)throw 'cas';s('bx.e.'+a,e);s('bx.m.'+a,m);if(re){s('bx.lh.'+a,hs(nx()));s('bx.c.'+a,cp?hs(cp.x):null)}return step(t)})})}
+    return tok().then(step).then(function(r){busy=0;st='';if(r==='later')again=Date.now()+2e4;
+      if(re&&idle()&&!typing())try{A.re()}catch(e){}show();return r},function(err){busy=0;st='err';show();return false})}
+  function reset(){if(!A)return;s('bx.e.'+A.a,eid());s('bx.rp.'+A.a,'1');s('bx.m.'+A.a,Date.now());setTimeout(function(){run()},1500)}
+  function tick(){if(!fid()||busy||document.hidden)return;var n=Date.now();
+    if((again&&n>again)||(n-lastRun>2e4&&dirty())||n-lastRun>3e5){again=0;run()}}
+  function ui(){var f=fid();return '<div class="card bxc" style="margin-top:14px"><div id="bxst" style="font-size:20px">'+stat()+'</div>'+
+    '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">'+(f?'<button class="btn small blue" data-bx="now">🔄 立即同步</button><button class="btn small gray" data-bx="link">🔗 家庭連結</button>':'')+
+    '<button class="btn small gray" data-bx="set">'+(f?'更換家庭連結':'設定家庭連結')+'</button></div><div id="bxx"></div></div>'}
+  function act(k){var x=document.getElementById('bxx');if(!x)return;
+    if(k==='now'){run();return}
+    if(k==='link'){var l=link();x.innerHTML='<div style="font-size:16px;margin-top:8px">家庭連結（只給自己家的裝置用，不要分享給別人）</div><input id="bxl" readonly style="width:100%;font-size:16px" value="'+l+'"><button class="btn small purple" data-bx="copy" style="margin-top:6px">📋 複製</button>';return}
+    if(k==='copy'){var i=document.getElementById('bxl');if(!i)return;i.focus();i.select();try{i.setSelectionRange(0,i.value.length)}catch(e){}var ok=false;try{ok=document.execCommand('copy')}catch(e){}
+      if(!ok&&navigator.clipboard)navigator.clipboard.writeText(i.value).catch(function(){});try{toast('已複製家庭連結')}catch(e){}return}
+    if(k==='set'){x.innerHTML='<div style="font-size:16px;margin-top:8px">把家庭連結貼在下面（這台的進度會和雲端合併，不會不見）</div><input id="bxin" style="width:100%;font-size:16px" placeholder="https://jp0615.github.io/?family=…"><button class="btn small green" data-bx="save" style="margin-top:6px">✅ 連結</button>';return}
+    if(k==='save'){var v=pf((document.getElementById('bxin')||{}).value);if(!v){try{toast('這不是家庭連結')}catch(e){}return}
+      setF(v);x.innerHTML='';show();run().then(function(){var b=document.querySelector('.bxc');if(b)b.outerHTML=ui()});return}}
+  function init(ad){A=ad;try{var v=pf(location.search);if(v)setF(v)}catch(e){}
+    document.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-bx]');if(el)act(el.dataset.bx)});
+    document.addEventListener('visibilitychange',function(){if(document.hidden){if(dirty())run(true)}else setTimeout(function(){run()},800)});
+    window.addEventListener('pagehide',function(){if(dirty())run(true)});
+    window.addEventListener('online',function(){setTimeout(function(){run()},1500)});
+    setInterval(tick,5e3);setTimeout(function(){run()},1500)}
+  return {init:init,run:run,reset:reset,ui:ui,link:link,_sm:sm}
+})();
+BX.init({a:'column',ex:exportText,im:function(t,m){doImport(t,m,1)},sk:SX_KEY,ck:SX_CFG,idle:function(){return ['home','menu','stats'].indexOf(view)>=0},re:function(){render()}});
 })();
 </script>
 </body>
