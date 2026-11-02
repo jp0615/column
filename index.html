@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="直式加減">
+<meta name="apple-mobile-web-app-title" content="直式計算">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#5aa83a">
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>直式加減小達人</title>
+<title>直式計算小達人</title>
 <style>
 @font-face{font-family:'PixelTC';src:url(fonts/pixel.woff2) format('woff2');font-display:block}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
@@ -601,7 +601,7 @@ function go(v){view=v;render()}
 function render(){if(view==='home')home();else if(view==='menu')menu();else if(view==='quiz')drawQ();else if(view==='result')result();else if(view==='house'||view==='build')buildView();else if(view==='stats')stats();else if(view==='shop')shopView();window.scrollTo(0,0)}
 function greet(){var h=new Date().getHours(),acc=D.hist.length;return acc?['今天也來挖幾題直式吧！','從個位開始，一格一格算，就不會錯喔！','答對就有方塊放進背包，你自己來蓋房子！','進位、退位，我們一起搞定！'][rnd(4)]:'嗨！我是阿方！答對直式賺方塊，蓋出你自己的世界！'}
 function home(){var W=Math.min(app.clientWidth-28,560);
-  app.innerHTML=topbar(false)+'<h1>直式加減小達人</h1><div class="sub">⛏️ 方塊世界篇 ⛏️</div>'+
+  app.innerHTML=topbar(false)+'<h1>直式計算小達人</h1><div class="sub">⛏️ 方塊世界篇 ⛏️</div>'+
   '<div class="buddy">'+buddy(96)+'<div class="bubble">'+greet()+'</div></div>'+
   miniWorld(W)+'<div class="mid" style="font-size:20px;margin-top:6px;color:#2c4a1e">🎒 背包裡有 '+invTotal()+' 塊方塊・⭐ 總共拿過 '+(D.stars|0)+' 顆</div>'+
   '<div class="grid g2" style="margin-top:20px"><button class="btn" style="grid-column:1/-1;font-size:36px;padding:26px" data-a="menu">⛏️ 開始挑戰</button>'+
@@ -992,7 +992,7 @@ function cHist(h){return (Array.isArray(h)?h:[]).filter(function(x){return x&&ty
 function wPlaced(w){var n=0;w=String(w||'');for(var i=0;i<w.length;i++)if(w[i]!=='.')n++;return n}
 function invSum(v){var t=0;for(var k in (v||{}))t+=v[k]|0;return t}
 function doImport(txt,mode){var o;try{o=JSON.parse(String(txt).trim())}catch(e){toast('代碼格式不正確');return}if(o&&o.app==='column'&&o.data)o=o.data;
-  if(!o||typeof o.lv!=='object'||typeof o.sk!=='object'||!o.lv||!o.sk){toast('這不是直式加減的紀錄');return}
+  if(!o||typeof o.lv!=='object'||typeof o.sk!=='object'||!o.lv||!o.sk){toast('這不是直式計算的紀錄');return}
   if(mode==='replace'){
     if(!confirm('用匯入的紀錄取代目前的紀錄嗎？'))return;var b=blank();for(var k in b)b[k]=o[k]!==undefined?o[k]:b[k];if(o.v===undefined)b.v=1;D=b;
   }else{

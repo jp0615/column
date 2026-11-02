@@ -1,7 +1,7 @@
 {
-  "name": "直式加減小達人",
-  "short_name": "直式加減",
-  "description": "國小二年級直式加減法練習（方塊世界篇）",
+  "name": "直式計算小達人",
+  "short_name": "直式計算",
+  "description": "國小二年級直式加減乘法練習（方塊世界篇）",
   "lang": "zh-TW",
   "start_url": "./index.html",
   "scope": "./",
